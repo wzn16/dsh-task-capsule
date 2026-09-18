@@ -1,6 +1,6 @@
-# dsh-pilot
+# dsh-task-capsule
 
-DSH 驾驶舱两件套：把「正在跑什么任务、跑完没有」钉在 Web UI 上。
+DSH 任务两件套：把「正在跑什么任务、跑完没有」钉在 Web UI 上。
 
 - **任务胶囊**：会话 header 常驻运行任务胶囊，圆点颜色分态（运行中 / 等待确认 / 已结束 / 出错），点击跳转对应会话，多任务时下拉列表
 - **任务通知卡**：任务完成 / 出错 / 等待用户确认时弹出页内通知卡，显式按钮跳转对应会话；支持提示音（WebAudio 合成，无音频文件）与浏览器系统通知（可选）
@@ -11,15 +11,15 @@ DSH 驾驶舱两件套：把「正在跑什么任务、跑完没有」钉在 Web
 
 ```sh
 # 1. 克隆仓库到本地任意位置
-git clone https://github.com/wzn16/dsh-pilot.git
-cd dsh-pilot
+git clone https://github.com/wzn16/dsh-task-capsule.git
+cd dsh-task-capsule
 
 # 2. 安装运行时依赖（仅 @deepseek-ai/schemastery 一个）
 pnpm install
 
 # 3. profile 依赖加入本地链接（路径换成你自己的克隆位置）
 cd ~/Library/Application\ Support/dsh-desktop/harness/profiles/web
-pnpm add "link:/path/to/dsh-pilot"
+pnpm add "link:/path/to/dsh-task-capsule"
 
 # 4. 重启 DSH Desktop（刷新浏览器不够）
 ```

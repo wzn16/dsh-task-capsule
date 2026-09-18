@@ -1,11 +1,11 @@
-// dsh-pilot · 功能【任务通知】· 宿主半部
+// dsh-task-capsule · 功能【任务通知】· 宿主半部
 // 职责：通知配置持久化 + 下发快照（页内卡片/提示音/系统通知在浏览器半部）。
 // 与 dsh-dock 的差异：不做钉钉/飞书群机器人推送（v1 精简掉，需要时再加）。
 //
-// RPC（webServer HTTP 路由，前缀 /dsh-pilot/notify/）：
+// RPC（webServer HTTP 路由，前缀 /dsh-task-capsule/notify/）：
 //   POST /status —— 活跃任务 + 最近完成 + 通知配置（客户端据此弹卡片、响提示音）
-//   POST /config —— 增量更新通知配置字段并持久化到 settings（dsh-pilot 命名空间 notify 段）
-import { PILOT_NS, SOUND_EFFECTS, sendJson, readBody } from '../../src/host-core.js'
+//   POST /config —— 增量更新通知配置字段并持久化到 settings（dsh-task-capsule 命名空间 notify 段）
+import { CAPSULE_NS, SOUND_EFFECTS, sendJson, readBody } from '../../src/host-core.js'
 
 // 默认配置（与 schema 默认值一致；settings.get 未挂载时的兜底）
 function defaultConfig() {
@@ -26,7 +26,7 @@ function readConfig(ctx) {
   const cfg = defaultConfig()
   try {
     const settings = ctx.get('settings')
-    const v = settings && typeof settings.get === 'function' ? settings.get(PILOT_NS) : null
+    const v = settings && typeof settings.get === 'function' ? settings.get(CAPSULE_NS) : null
     const n = v && typeof v === 'object' && v.notify && typeof v.notify === 'object' ? v.notify : null
     if (n) {
       for (const key of Object.keys(cfg)) {
@@ -53,11 +53,11 @@ export function setupNotify(ctx, tracker) {
   disposers.push(ctx.inject(['webServer'], (wsCtx) => {
     wsCtx.effect(() => wsCtx.webServer.register({
       kind: 'prefix',
-      path: '/dsh-pilot/notify',
+      path: '/dsh-task-capsule/notify',
       async handler(req, res) {
         try {
           const url = new URL(req.url || '/', 'http://dsh.internal')
-          const method = url.pathname.replace(/^\/dsh-pilot\/notify\/?/, '').split('/')[0] || ''
+          const method = url.pathname.replace(/^\/dsh-task-capsule\/notify\/?/, '').split('/')[0] || ''
           const payload = await readBody(req)
 
           if (method === 'status') {
@@ -86,27 +86,27 @@ export function setupNotify(ctx, tracker) {
               throw new Error('settings 服务不可用，配置无法持久化')
             }
             try {
-              await settings.mutate(PILOT_NS, [{ op: 'set', path: ['notify'], value: cfg }])
+              await settings.mutate(CAPSULE_NS, [{ op: 'set', path: ['notify'], value: cfg }])
             } catch (e) {
               const err = new Error('保存配置被拒绝：' + ((e && e.message) || String(e)))
               err.statusCode = 400
               throw err
             }
-            console.log('[dsh-pilot] notify config saved')
+            console.log('[dsh-task-capsule] notify config saved')
             return sendJson(res, 200, { ok: true, data: { config: cfg, savedAt: Date.now() } })
           }
 
           return sendJson(res, 404, { ok: false, error: { code: 'method-not-found', message: 'unknown method: ' + method } })
         } catch (e) {
           const status = e && e.statusCode ? e.statusCode : 500
-          console.error('[dsh-pilot] notify HTTP error:', status, e && e.message)
+          console.error('[dsh-task-capsule] notify HTTP error:', status, e && e.message)
           return sendJson(res, status, {
             ok: false,
             error: { code: status >= 500 ? 'internal' : 'bad-request', message: (e && e.message) || String(e) },
           })
         }
       },
-    }), 'dsh-pilot notify: /dsh-pilot/notify HTTP route')
+    }), 'dsh-task-capsule notify: /dsh-task-capsule/notify HTTP route')
   }))
 
   return dispose

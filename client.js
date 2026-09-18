@@ -1,5 +1,5 @@
 /**
- * dsh-pilot — 浏览器半部（手写 __ModuleLoader__ bundle，无构建链，勿用 JSX）。
+ * dsh-task-capsule — 浏览器半部（手写 __ModuleLoader__ bundle，无构建链，勿用 JSX）。
  *
  * 两块 UI：
  *  1. 运行任务胶囊（in-flow 挂会话 header 右侧 utilities 行）：「N 个任务 · 耗时」，
@@ -9,11 +9,11 @@
  * 设置页（settings.section）：通知行为开关。
  * 不含 token 统计（DSH 自带会话统计条已给 token/缓存命中；费用估算按用户裁决移除）。
  *
- * Host 通信：fetch('/dsh-pilot/runstate/status' | '/dsh-pilot/notify/status|config')。
+ * Host 通信：fetch('/dsh-task-capsule/runstate/status' | '/dsh-task-capsule/notify/status|config')。
  * 跳转会话：uiWorkspace.openSession（含跨工作区切换），回退 sessions.open。
  */
 window.__ModuleLoader__.load({
-	id: "dsh-pilot",
+	id: "dsh-task-capsule",
 	factory: (require) => {
 		var module = { exports: {} };
 		var exports = module.exports;
@@ -86,10 +86,10 @@ window.__ModuleLoader__.load({
 			if (typeof document === "undefined") return;
 			try {
 				if (!cssTag || !cssTag.isConnected) {
-					cssTag = document.querySelector('style[data-plugin-css="dsh-pilot"]');
+					cssTag = document.querySelector('style[data-plugin-css="dsh-task-capsule"]');
 					if (!cssTag) {
 						cssTag = document.createElement("style");
-						cssTag.dataset.pluginCss = "dsh-pilot";
+						cssTag.dataset.pluginCss = "dsh-task-capsule";
 						document.head.appendChild(cssTag);
 					}
 				}
@@ -215,8 +215,8 @@ window.__ModuleLoader__.load({
 				},
 			};
 		}
-		var runStore = makeStore(function () { return rpc("dsh-pilot/runstate", "status"); });
-		var notifyStore = makeStore(function () { return rpc("dsh-pilot/notify", "status"); });
+		var runStore = makeStore(function () { return rpc("dsh-task-capsule/runstate", "status"); });
+		var notifyStore = makeStore(function () { return rpc("dsh-task-capsule/notify", "status"); });
 
 		function useStore(store) {
 			var state = react.useState(0);
@@ -271,7 +271,7 @@ window.__ModuleLoader__.load({
 				var sessions = typeof ctx.get === "function" ? ctx.get("sessions") : ctx.sessions;
 				if (sessions && typeof sessions.open === "function") sessions.open(sessionId);
 			} catch (e) {
-				console.error("[dsh-pilot] open session failed:", e && e.message);
+				console.error("[dsh-task-capsule] open session failed:", e && e.message);
 			}
 		}
 
@@ -436,7 +436,7 @@ window.__ModuleLoader__.load({
 					});
 					if (cfg.soundNotify !== false) playSound(cfg.soundEffect, ok ? "ok" : "error");
 					if (cfg.systemNotify && typeof document !== "undefined" && document.hidden) {
-						systemNotify((ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(r.endReason)), (r.title || "") + " · " + fmtDur(r.duration), "dsh-pilot-" + key);
+						systemNotify((ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(r.endReason)), (r.title || "") + " · " + fmtDur(r.duration), "dsh-task-capsule-" + key);
 					}
 				}
 				// 等待确认
@@ -455,7 +455,7 @@ window.__ModuleLoader__.load({
 							});
 							if (cfg.soundNotify !== false) playSound("ding", "ok");
 							if (cfg.systemNotify && typeof document !== "undefined" && document.hidden) {
-								systemNotify("✋ dsh 任务等待确认", (a.toolName || "") + " · " + truncate(t.title || "", 60), "dsh-pilot-" + akey);
+								systemNotify("✋ dsh 任务等待确认", (a.toolName || "") + " · " + truncate(t.title || "", 60), "dsh-task-capsule-" + akey);
 							}
 						}
 					}
@@ -528,21 +528,21 @@ window.__ModuleLoader__.load({
 				}));
 		}
 
-		function PilotSettings() {
+		function CapsuleSettings() {
 			var store = useStore(notifyStore);
 			react.useEffect(function () { if (!store.snap) store.refresh(); }, [store]);
 			var cfg = (store.snap && store.snap.config) || null;
 			function patch(obj) {
-				rpc("dsh-pilot/notify", "config", obj).then(function () { return store.refresh(); }).catch(function (e) {
-					console.error("[dsh-pilot] save notify config failed:", e && e.message);
+				rpc("dsh-task-capsule/notify", "config", obj).then(function () { return store.refresh(); }).catch(function (e) {
+					console.error("[dsh-task-capsule] save notify config failed:", e && e.message);
 				});
 			}
 			if (!cfg) return h("div", { className: "pls-root" }, h("div", { className: "pls-intro" }, "正在读取通知配置…"));
 			return h("div", { className: "pls-root" },
 				h("div", { className: "pls-intro" },
-					"dsh-pilot · 驾驶舱两件套：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
+					"dsh-task-capsule · 任务两件套：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
 					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。三功能常开、无独立开关；此处只配置通知行为。",
-					"配置持久化在 settings 的 dsh-pilot 命名空间（首启动已从 dsh-dock 只读迁移旧值）。"),
+					"配置持久化在 settings 的 dsh-task-capsule 命名空间（首启动已从 dsh-dock 只读迁移旧值）。"),
 				h("div", { className: "pls-card" },
 					h(SwitchRow, {
 						label: "完成通知", desc: "任务正常结束时弹卡片",
@@ -606,29 +606,29 @@ window.__ModuleLoader__.load({
 			ctxRef.current = ctx;
 			ensureCss();
 			// runstate 全局轮询（胶囊/侧栏入口共享）；插件卸载时停止
-			ctx.effect(function () { return startRunPolling(); }, "dsh-pilot: runstate polling");
+			ctx.effect(function () { return startRunPolling(); }, "dsh-task-capsule: runstate polling");
 			var slots = ctx.get("slots");
 			if (slots === undefined) return;
 
 			// 任务胶囊：in-flow 挂会话 header 右侧 utilities 行（chrome 行，不遮消息区）
 			slots.inject("conversation.session.header.utilities", function () { return slots.register(
-				{ name: "conversation.session.header.utilities", id: "dsh-pilot-capsule", order: 5, label: "dsh-pilot 任务胶囊" },
+				{ name: "conversation.session.header.utilities", id: "dsh-task-capsule-capsule", order: 5, label: "dsh-task-capsule 任务胶囊" },
 				function () { return h(Capsule, null); }); });
 
 			// 通知卡栈：全局浮层
 			slots.inject("shell.overlay", function () { return slots.register(
-				{ name: "shell.overlay", id: "dsh-pilot-overlay", order: 31, label: "dsh-pilot 通知卡栈" },
+				{ name: "shell.overlay", id: "dsh-task-capsule-overlay", order: 31, label: "dsh-task-capsule 通知卡栈" },
 				function () { return h(ToastStack, null); }); });
 
 			// 设置页：通知行为配置
 			slots.inject("settings.section", function () { return slots.register(
-				{ name: "settings.section", id: "dsh-pilot", order: 91, label: "dsh-pilot" },
-				function () { return h(PilotSettings, null); }); });
+				{ name: "settings.section", id: "dsh-task-capsule", order: 91, label: "dsh-task-capsule" },
+				function () { return h(CapsuleSettings, null); }); });
 		}
 
 		exports.apply = apply;
 		exports.inject = inject;
-		exports.name = "dsh-pilot";
+		exports.name = "dsh-task-capsule";
 		return module.exports;
 	}
 });

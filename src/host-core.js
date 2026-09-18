@@ -1,10 +1,10 @@
-// dsh-pilot · 宿主共享内核：常量、settings schema 与 HTTP 小工具。
+// dsh-task-capsule · 宿主共享内核：常量、settings schema 与 HTTP 小工具。
 // 从 dsh-dock src/host-core.js 精简而来：只保留本插件三功能需要的部分
 // （notify 配置段 + sendJson/readBody），去掉动画/远程访问/视觉代理等段。
 import z from '@deepseek-ai/schemastery'
 
-/** dsh-pilot 自有 settings 命名空间（通知行为配置持久化）。 */
-export const PILOT_NS = 'dsh-pilot'
+/** dsh-task-capsule 自有 settings 命名空间（通知行为配置持久化）。 */
+export const CAPSULE_NS = 'dsh-task-capsule'
 
 /** 通知配置字段清单（schema、迁移、客户端默认值三处共用同一份键名）。 */
 export const NOTIFY_FIELDS = [
@@ -13,7 +13,7 @@ export const NOTIFY_FIELDS = [
 ]
 
 /** 自有命名空间 schema：只有 notify 一段（三功能常开，不做功能开关表）。 */
-export const PilotConfig = z.object({
+export const CapsuleConfig = z.object({
   // 【任务通知】行为配置：页内卡片 / 提示音 / 浏览器系统通知。
   // 键名与 dsh-dock 的 notify 段保持一致，便于首启动只读迁移旧值。
   notify: z.object({
@@ -39,13 +39,13 @@ export const SOUND_EFFECTS = ['chime', 'ding']
 
 /**
  * 一次性只读迁移：从 dsh-dock 的 notify 段拷贝用户旧配置到本插件命名空间。
- * 只写 dsh-pilot 自己的段，绝不写回 dsh-dock；dsh-dock 未安装/无旧值时静默跳过。
+ * 只写 dsh-task-capsule 自己的段，绝不写回 dsh-dock；dsh-dock 未安装/无旧值时静默跳过。
  */
 export async function migrateNotifyFromDock(ctx) {
   try {
     const settings = ctx.get('settings')
     if (!settings || typeof settings.get !== 'function' || typeof settings.mutate !== 'function') return
-    const mine = settings.get(PILOT_NS)
+    const mine = settings.get(CAPSULE_NS)
     const myNotify = mine && typeof mine === 'object' && mine.notify && typeof mine.notify === 'object' ? mine.notify : null
     if (myNotify && myNotify.migratedFromDock === true) return
     const dock = settings.get('dsh-dock')
@@ -58,10 +58,10 @@ export async function migrateNotifyFromDock(ctx) {
     }
     if (n === 0) return
     const next = Object.assign({}, myNotify || {}, copied, { migratedFromDock: true })
-    await settings.mutate(PILOT_NS, [{ op: 'set', path: ['notify'], value: next }])
-    console.log('[dsh-pilot] notify config migrated (read-only) from dsh-dock; fields copied:', n)
+    await settings.mutate(CAPSULE_NS, [{ op: 'set', path: ['notify'], value: next }])
+    console.log('[dsh-task-capsule] notify config migrated (read-only) from dsh-dock; fields copied:', n)
   } catch (e) {
-    console.warn('[dsh-pilot] notify migration from dsh-dock skipped:', (e && e.message) || String(e))
+    console.warn('[dsh-task-capsule] notify migration from dsh-dock skipped:', (e && e.message) || String(e))
   }
 }
 

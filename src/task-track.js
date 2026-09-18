@@ -1,4 +1,4 @@
-// dsh-pilot · 宿主共享内核：会话级任务追踪（胶囊/通知共用一份数据）。
+// dsh-task-capsule · 宿主共享内核：会话级任务追踪（胶囊/通知共用一份数据）。
 // 从 dsh-dock src/task-track.js 精简移植：去掉动画专用字段（motionTicks/lastMotionAt），
 // 保留阶段推导、等待确认（approvals）、token 累计、会话标题与结束归档。
 //
@@ -121,7 +121,7 @@ export function createTracker(ctx) {
     if (completedSessions.length > MAX_COMPLETED) completedSessions.pop()
     for (const fn of finishListeners) {
       try { fn(record) } catch (e) {
-        console.error('[dsh-pilot] task-track finish listener error:', e && e.message)
+        console.error('[dsh-task-capsule] task-track finish listener error:', e && e.message)
       }
     }
   }
@@ -232,14 +232,14 @@ export function createTracker(ctx) {
       try {
         handleSessionEvent(sessionQuery, session, event)
       } catch (err) {
-        console.error('[dsh-pilot] task-track handle event error', err)
+        console.error('[dsh-task-capsule] task-track handle event error', err)
       }
     }))
     disposers.push(sqCtx.on('agent/status', (payload) => {
       try {
         handleAgentStatus(sessionQuery, payload && payload.agent, payload && payload.status)
       } catch (err) {
-        console.error('[dsh-pilot] task-track handle agent/status error', err)
+        console.error('[dsh-task-capsule] task-track handle agent/status error', err)
       }
     }))
     // agent 销毁兜底归档（会话直接关闭时也产出完成记录）
@@ -248,7 +248,7 @@ export function createTracker(ctx) {
         const sid = payload && payload.agent && payload.agent.id ? String(payload.agent.id) : ''
         if (sid) finishSession(sid)
       } catch (err) {
-        console.error('[dsh-pilot] task-track handle agent/disposed error', err)
+        console.error('[dsh-task-capsule] task-track handle agent/disposed error', err)
       }
     }))
   }))
