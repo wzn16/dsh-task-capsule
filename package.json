@@ -1,0 +1,44 @@
+{
+  "name": "dsh-pilot",
+  "version": "0.1.0",
+  "description": "DSH 驾驶舱两件套：会话 header 运行任务胶囊（圆点颜色分态、点击跳转对应会话、多任务下拉列表）、任务通知卡（显式按钮跳转、提示音、可选系统通知）。从 dsh-dock 最常用的功能提取精简而成；token 统计交给 DSH 自带会话统计条，不重复做。",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "client.js",
+    "src/",
+    "features/",
+    "cordis.patch.yml"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "task-capsule",
+    "notify"
+  ],
+  "author": "zhaonan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wzn16/dsh-pilot.git"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  }
+}
