@@ -568,13 +568,13 @@ window.__ModuleLoader__.load({
 					h("div", null, "系统通知权限"),
 					perm === "denied" ? h("div", { className: "pls-guide" },
 						"通知权限已被系统拒绝：请在 系统设置 → 通知 → DSH Desktop 中允许通知（Windows：设置 → 系统 → 通知），改完如未生效重启 DSH。") : null,
-					perm === "default" ? h("div", { className: "pls-desc" }, "打开上方开关时会弹出系统授权弹窗") : null),
+					perm === "default" ? h("div", { className: "pls-desc" }, "点右侧按钮弹出系统授权弹窗，允许后自动发送测试通知") : null),
 				h("span", { className: "pls-badge " + st.cls }, st.label),
-				perm === "granted" ? h("button", {
+				(perm === "granted" || perm === "default") ? h("button", {
 					type: "button",
 					className: "pls-btn",
 					onClick: props.onTest,
-				}, "发测试通知") : null);
+				}, perm === "granted" ? "发测试通知" : "请求授权并测试") : null);
 		}
 
 		function CapsuleSettings() {
@@ -637,7 +637,7 @@ window.__ModuleLoader__.load({
 						on: !!cfg.systemNotifyAlways,
 						onToggle: function () { patch({ systemNotifyAlways: !cfg.systemNotifyAlways }); },
 					}) : null,
-					cfg.systemNotify ? h(PermRow, { perm: perm, onTest: sendTestNotify }) : null,
+					h(PermRow, { perm: perm, onTest: sendTestNotify }),
 					h("div", { className: "pls-row" },
 						h("div", { className: "pls-label" }, h("div", null, "卡片停留时长")),
 						h("select", {
