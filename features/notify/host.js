@@ -15,6 +15,7 @@ function defaultConfig() {
     notifyOnConfirm: true,
     notifyStayMs: 8000,
     systemNotify: false,
+    systemNotifyAlways: false,
     soundNotify: true,
     soundEffect: 'chime',
     migratedFromDock: false,
@@ -78,6 +79,7 @@ export function setupNotify(ctx, tracker) {
               cfg.notifyStayMs = Math.max(0, Math.min(600000, Math.round(p.notifyStayMs)))
             }
             if (typeof p.systemNotify === 'boolean') cfg.systemNotify = p.systemNotify
+            if (typeof p.systemNotifyAlways === 'boolean') cfg.systemNotifyAlways = p.systemNotifyAlways
             if (typeof p.soundNotify === 'boolean') cfg.soundNotify = p.soundNotify
             if (typeof p.soundEffect === 'string' && SOUND_EFFECTS.includes(p.soundEffect)) cfg.soundEffect = p.soundEffect
 

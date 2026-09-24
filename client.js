@@ -79,6 +79,15 @@ window.__ModuleLoader__.load({
 			".pls-sw.on{background:var(--pl-ok);border-color:transparent;}",
 			".pls-sw.on::after{transform:translateX(15px);}",
 			".pls-sel{flex:none;border:1px solid var(--dsw-alias-border-l2,#ccc);background:var(--dsw-alias-bg-layer-2,#f4f4f4);color:var(--dsw-alias-label-primary,#111);border-radius:8px;padding:3px 8px;font-family:inherit;font-size:12px;}",
+			// 权限徽标（三态）+ 小按钮 + denied 引导文案
+			".pls-badge{flex:none;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:11px;line-height:16px;border:1px solid transparent;}",
+			".pls-badge::before{content:\"\";width:6px;height:6px;border-radius:50%;background:currentColor;}",
+			".pls-badge.ok{color:var(--pl-ok);border-color:color-mix(in srgb,var(--pl-ok) 40%,transparent);background:color-mix(in srgb,var(--pl-ok) 8%,transparent);}",
+			".pls-badge.off{color:var(--dsw-alias-label-tertiary,#888);border-color:var(--dsw-alias-border-l2,#ccc);background:transparent;}",
+			".pls-badge.err{color:var(--pl-err);border-color:color-mix(in srgb,var(--pl-err) 40%,transparent);background:color-mix(in srgb,var(--pl-err) 8%,transparent);}",
+			".pls-btn{flex:none;border:1px solid color-mix(in srgb,var(--pl-accent) 40%,transparent);background:color-mix(in srgb,var(--pl-accent) 8%,transparent);color:var(--pl-accent);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;}",
+			".pls-btn:hover{background:color-mix(in srgb,var(--pl-accent) 16%,transparent);}",
+			".pls-guide{font-size:11px;color:var(--pl-err);line-height:1.5;margin-top:2px;}",
 		].join("\n");
 
 		var cssTag = null;
@@ -186,6 +195,22 @@ window.__ModuleLoader__.load({
 				if (typeof window === "undefined" || !("Notification" in window)) return;
 				if (Notification.permission !== "granted") return;
 				new Notification(title, { body: body, tag: tag });
+			} catch (e) { /* ignore */ }
+		}
+
+		// 测试系统通知：设置页一键验证链路；无权限时先请求授权，批准后自动补发
+		function sendTestNotify() {
+			try {
+				if (typeof window === "undefined" || !("Notification" in window)) return;
+				if (Notification.permission !== "granted") {
+					var p = Notification.requestPermission();
+					if (p && p.then) p.then(function (r) { if (r === "granted") sendTestNotify(); });
+					return;
+				}
+				new Notification("✅ dsh-task-capsule 测试通知", {
+					body: "系统通知链路已打通：任务完成 / 等待确认时会在系统通知中心提醒。",
+					tag: "dsh-task-capsule-test",
+				});
 			} catch (e) { /* ignore */ }
 		}
 		//#endregion
@@ -435,7 +460,7 @@ window.__ModuleLoader__.load({
 						sessionId: r.sessionId,
 					});
 					if (cfg.soundNotify !== false) playSound(cfg.soundEffect, ok ? "ok" : "error");
-					if (cfg.systemNotify && typeof document !== "undefined" && document.hidden) {
+					if (cfg.systemNotify && (cfg.systemNotifyAlways || (typeof document !== "undefined" && document.hidden))) {
 						systemNotify((ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(r.endReason)), (r.title || "") + " · " + fmtDur(r.duration), "dsh-task-capsule-" + key);
 					}
 				}
@@ -454,7 +479,7 @@ window.__ModuleLoader__.load({
 								sessionId: t.sessionId,
 							});
 							if (cfg.soundNotify !== false) playSound("ding", "ok");
-							if (cfg.systemNotify && typeof document !== "undefined" && document.hidden) {
+							if (cfg.systemNotify && (cfg.systemNotifyAlways || (typeof document !== "undefined" && document.hidden))) {
 								systemNotify("✋ dsh 任务等待确认", (a.toolName || "") + " · " + truncate(t.title || "", 60), "dsh-task-capsule-" + akey);
 							}
 						}
@@ -528,10 +553,42 @@ window.__ModuleLoader__.load({
 				}));
 		}
 
+		// 系统通知权限状态行：徽标显示授权状态；denied 给系统设置引导；granted 可发测试通知
+		function PermRow(props) {
+			var perm = props.perm;
+			var map = {
+				granted: { cls: "ok", label: "已授权" },
+				default: { cls: "off", label: "未请求" },
+				denied: { cls: "err", label: "已被拒绝" },
+				unsupported: { cls: "off", label: "当前环境不支持" },
+			};
+			var st = map[perm] || map.unsupported;
+			return h("div", { className: "pls-row" },
+				h("div", { className: "pls-label" },
+					h("div", null, "系统通知权限"),
+					perm === "denied" ? h("div", { className: "pls-guide" },
+						"通知权限已被系统拒绝：请在 系统设置 → 通知 → DSH Desktop 中允许通知（Windows：设置 → 系统 → 通知），改完如未生效重启 DSH。") : null,
+					perm === "default" ? h("div", { className: "pls-desc" }, "打开上方开关时会弹出系统授权弹窗") : null),
+				h("span", { className: "pls-badge " + st.cls }, st.label),
+				perm === "granted" ? h("button", {
+					type: "button",
+					className: "pls-btn",
+					onClick: props.onTest,
+				}, "发测试通知") : null);
+		}
+
 		function CapsuleSettings() {
 			var store = useStore(notifyStore);
 			react.useEffect(function () { if (!store.snap) store.refresh(); }, [store]);
 			var cfg = (store.snap && store.snap.config) || null;
+			// 系统通知授权状态（纯前端读取 Notification.permission；授权动作后手动刷新）
+			var permState = react.useState(function () {
+				return (typeof window !== "undefined" && "Notification" in window) ? Notification.permission : "unsupported";
+			});
+			var perm = permState[0], setPerm = permState[1];
+			function refreshPerm() {
+				if (typeof window !== "undefined" && "Notification" in window) setPerm(Notification.permission);
+			}
 			function patch(obj) {
 				rpc("dsh-task-capsule/notify", "config", obj).then(function () { return store.refresh(); }).catch(function (e) {
 					console.error("[dsh-task-capsule] save notify config failed:", e && e.message);
@@ -541,8 +598,7 @@ window.__ModuleLoader__.load({
 			return h("div", { className: "pls-root" },
 				h("div", { className: "pls-intro" },
 					"dsh-task-capsule · 任务两件套：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
-					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。三功能常开、无独立开关；此处只配置通知行为。",
-					"配置持久化在 settings 的 dsh-task-capsule 命名空间（首启动已从 dsh-dock 只读迁移旧值）。"),
+					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。三功能常开、无独立开关；此处只配置通知行为。"),
 				h("div", { className: "pls-card" },
 					h(SwitchRow, {
 						label: "完成通知", desc: "任务正常结束时弹卡片",
@@ -565,16 +621,23 @@ window.__ModuleLoader__.load({
 						onToggle: function () { patch({ soundNotify: cfg.soundNotify === false }); },
 					}),
 					h(SwitchRow, {
-						label: "浏览器系统通知", desc: "页面在后台时推送（开启时请求授权）",
+						label: "浏览器系统通知", desc: "Electron 客户端内为系统级通知（macOS 通知中心 / Windows Toast）",
 						on: !!cfg.systemNotify,
 						onToggle: function () {
 							var next = !cfg.systemNotify;
 							if (next && typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-								Notification.requestPermission();
+								var p = Notification.requestPermission();
+								if (p && p.then) p.then(function () { refreshPerm(); });
 							}
 							patch({ systemNotify: next });
 						},
 					}),
+					cfg.systemNotify ? h(SwitchRow, {
+						label: "前台时也推系统通知", desc: "默认仅页面在后台时推送；开启后任务结束/等待确认时不分前后台都推",
+						on: !!cfg.systemNotifyAlways,
+						onToggle: function () { patch({ systemNotifyAlways: !cfg.systemNotifyAlways }); },
+					}) : null,
+					cfg.systemNotify ? h(PermRow, { perm: perm, onTest: sendTestNotify }) : null,
 					h("div", { className: "pls-row" },
 						h("div", { className: "pls-label" }, h("div", null, "卡片停留时长")),
 						h("select", {

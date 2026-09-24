@@ -9,7 +9,7 @@ export const CAPSULE_NS = 'dsh-task-capsule'
 /** 通知配置字段清单（schema、迁移、客户端默认值三处共用同一份键名）。 */
 export const NOTIFY_FIELDS = [
   'notifyOnComplete', 'notifyOnError', 'notifyOnConfirm', 'notifyStayMs',
-  'systemNotify', 'soundNotify', 'soundEffect',
+  'systemNotify', 'systemNotifyAlways', 'soundNotify', 'soundEffect',
 ]
 
 /** 自有命名空间 schema：只有 notify 一段（三功能常开，不做功能开关表）。 */
@@ -23,8 +23,10 @@ export const CapsuleConfig = z.object({
     notifyOnConfirm: z.boolean().default(true),
     // 通知停留毫秒数（0 = 常驻直到手动关闭）
     notifyStayMs: z.number().default(8000),
-    // 浏览器系统通知（页面后台时推送）
+    // 浏览器系统通知（默认仅页面后台时推送）
     systemNotify: z.boolean().default(false),
+    // 前台也推系统通知（开启后不再限制页面后台；Electron 客户端内为系统级通知）
+    systemNotifyAlways: z.boolean().default(false),
     // 任务结束提示音（WebAudio 合成，无音频文件依赖）
     soundNotify: z.boolean().default(true),
     // 提示音音效（完成场景音名；异常音由音效包内配套）
