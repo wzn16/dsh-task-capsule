@@ -4,7 +4,10 @@
 //
 // RPC（webServer HTTP 路由，前缀 /dsh-task-capsule/notify/）：
 //   POST /status —— 活跃任务 + 最近完成 + 通知配置（客户端据此弹卡片、响提示音）
-//   POST /config —— 增量更新通知配置字段并持久化到 settings（dsh-task-capsule 命名空间 notify 段）
+//   POST /config —— 增量更新通知配置字段并持久化到插件自有 JSON（官方壳下 settings 门面拒绝写入）
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 import { CAPSULE_NS, SOUND_EFFECTS, sendJson, readBody } from '../../src/host-core.js'
 
 // 默认配置（与 schema 默认值一致；settings.get 未挂载时的兜底）
@@ -22,20 +25,43 @@ function defaultConfig() {
   }
 }
 
-// 读 settings 里的 notify 配置（resolved 值已含 schema 默认），异常时回退默认
+// 自有配置文件持久化（2026-09-26 适配官方壳：settings 门面拒绝未声明条目写入，
+// 改为插件自有 JSON，与 harness API 漂移解耦；settings 仅作旧值一次性回退读取）
+const NOTIFY_FILE = path.join(
+  process.env.DSH_HOME || path.join(os.homedir(), '.dsh'),
+  'dsh-task-capsule.notify.json',
+)
+
+function loadOwnConfig() {
+  try {
+    const v = JSON.parse(fs.readFileSync(NOTIFY_FILE, 'utf8'))
+    return v && typeof v === 'object' && v.notify && typeof v.notify === 'object' ? v.notify : null
+  } catch { return null }
+}
+
+function saveOwnConfig(notify) {
+  const tmp = NOTIFY_FILE + '.tmp'
+  fs.writeFileSync(tmp, JSON.stringify({ notify }, null, 2))
+  fs.renameSync(tmp, NOTIFY_FILE)
+}
+
+// 读 notify 配置：自有文件优先；文件不存在时回退 settings 旧值；再不行用默认
 function readConfig(ctx) {
   const cfg = defaultConfig()
   try {
-    const settings = ctx.get('settings')
-    const v = settings && typeof settings.get === 'function' ? settings.get(CAPSULE_NS) : null
-    const n = v && typeof v === 'object' && v.notify && typeof v.notify === 'object' ? v.notify : null
+    let n = loadOwnConfig()
+    if (!n) {
+      const settings = ctx.get('settings')
+      const v = settings && typeof settings.get === 'function' ? settings.get(CAPSULE_NS) : null
+      n = v && typeof v === 'object' && v.notify && typeof v.notify === 'object' ? v.notify : null
+    }
     if (n) {
       for (const key of Object.keys(cfg)) {
         if (n[key] !== undefined) cfg[key] = n[key]
       }
       if (!SOUND_EFFECTS.includes(cfg.soundEffect)) cfg.soundEffect = 'chime'
     }
-  } catch { /* settings 未挂载，用默认 */ }
+  } catch { /* 读取失败，用默认 */ }
   return cfg
 }
 
@@ -83,18 +109,14 @@ export function setupNotify(ctx, tracker) {
             if (typeof p.soundNotify === 'boolean') cfg.soundNotify = p.soundNotify
             if (typeof p.soundEffect === 'string' && SOUND_EFFECTS.includes(p.soundEffect)) cfg.soundEffect = p.soundEffect
 
-            const settings = ctx.get('settings')
-            if (!settings || typeof settings.mutate !== 'function') {
-              throw new Error('settings 服务不可用，配置无法持久化')
-            }
             try {
-              await settings.mutate(CAPSULE_NS, [{ op: 'set', path: ['notify'], value: cfg }])
+              saveOwnConfig(cfg)
             } catch (e) {
-              const err = new Error('保存配置被拒绝：' + ((e && e.message) || String(e)))
-              err.statusCode = 400
+              const err = new Error('保存配置失败：' + ((e && e.message) || String(e)))
+              err.statusCode = 500
               throw err
             }
-            console.log('[dsh-task-capsule] notify config saved')
+            console.log('[dsh-task-capsule] notify config saved (own file)')
             return sendJson(res, 200, { ok: true, data: { config: cfg, savedAt: Date.now() } })
           }
 
