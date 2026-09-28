@@ -199,16 +199,20 @@ window.__ModuleLoader__.load({
 		}
 
 		// 测试系统通知：设置页一键验证链路；无权限时先请求授权，批准后自动补发
-		function sendTestNotify() {
+		function sendTestNotify(switchOn) {
 			try {
 				if (typeof window === "undefined" || !("Notification" in window)) return;
 				if (Notification.permission !== "granted") {
 					var p = Notification.requestPermission();
-					if (p && p.then) p.then(function (r) { if (r === "granted") sendTestNotify(); });
+					if (p && p.then) p.then(function (r) { if (r === "granted") sendTestNotify(switchOn); });
 					return;
 				}
-				new Notification("✅ dsh-task-capsule 测试通知", {
-					body: "系统通知链路已打通：任务完成 / 等待确认时会在系统通知中心提醒。",
+				// 开关未开时明确警示「仅权限链路」，避免假阳性（undefined 视为旧调用，不提示）
+				var warn = switchOn === false;
+				new Notification(warn ? "⚠️ dsh-task-capsule 测试通知（仅权限链路）" : "✅ dsh-task-capsule 测试通知", {
+					body: warn
+						? "通知权限正常，但「浏览器系统通知」开关未开：任务结束时不会推送系统通知，请到设置里打开开关。"
+						: "系统通知链路已打通：任务完成 / 等待确认时会在系统通知中心提醒。",
 					tag: "dsh-task-capsule-test",
 				});
 			} catch (e) { /* ignore */ }
@@ -597,7 +601,7 @@ window.__ModuleLoader__.load({
 			if (!cfg) return h("div", { className: "pls-root" }, h("div", { className: "pls-intro" }, "正在读取通知配置…"));
 			return h("div", { className: "pls-root" },
 				h("div", { className: "pls-intro" },
-					"dsh-task-capsule · 任务两件套：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
+					"任务胶囊（任务两件套）：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
 					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。三功能常开、无独立开关；此处只配置通知行为。"),
 				h("div", { className: "pls-card" },
 					h(SwitchRow, {
@@ -637,7 +641,7 @@ window.__ModuleLoader__.load({
 						on: !!cfg.systemNotifyAlways,
 						onToggle: function () { patch({ systemNotifyAlways: !cfg.systemNotifyAlways }); },
 					}) : null,
-					h(PermRow, { perm: perm, onTest: sendTestNotify }),
+					h(PermRow, { perm: perm, onTest: function () { sendTestNotify(cfg.systemNotify !== false); } }),
 					h("div", { className: "pls-row" },
 						h("div", { className: "pls-label" }, h("div", null, "卡片停留时长")),
 						h("select", {
@@ -685,7 +689,7 @@ window.__ModuleLoader__.load({
 
 			// 设置页：通知行为配置
 			slots.inject("settings.section", function () { return slots.register(
-				{ name: "settings.section", id: "dsh-task-capsule", order: 91, label: "dsh-task-capsule" },
+				{ name: "settings.section", id: "dsh-task-capsule", order: 91, label: "任务胶囊" },
 				function () { return h(CapsuleSettings, null); }); });
 		}
 
