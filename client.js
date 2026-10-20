@@ -155,12 +155,6 @@ window.__ModuleLoader__.load({
 		// 只有明确的 completed 才算成功：空 endReason（会话被关闭/agent 销毁）曾被判成功，属假阳性
 		function isSuccessEnd(r) { return r === "completed"; }
 
-		function fmtCompact(n) {
-			n = Number(n) || 0;
-			if (n >= 1e6) return (n / 1e6).toFixed(2) + "M";
-			if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
-			return String(Math.round(n));
-		}
 		function fmtClock(ms) {
 			var s = Math.max(0, Math.floor((ms || 0) / 1000));
 			var hh = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
@@ -273,8 +267,22 @@ window.__ModuleLoader__.load({
 				},
 			};
 		}
-		var runStore = makeStore(function () { return rpc("dsh-task-capsule/runstate", "status"); });
-		var notifyStore = makeStore(function () { return rpc("dsh-task-capsule/notify", "status"); });
+		// 单一数据源：notify/status 是 runstate 的超集（快照 + 配置 + 未读），只轮询它，
+		// 胶囊/通知/设置三处都从这一个 store 派生，活跃态请求数减半
+		var capsuleStore = makeStore(function () { return rpc("dsh-task-capsule/notify", "status"); });
+		var runStore = capsuleStore;
+		var notifyStore = capsuleStore;
+
+		// 去重集合放模块作用域：组件重挂载（切主题/布局变化）会丢 useRef 里的状态，
+		// 表现为同一批完成补弹一次或漏弹一次
+		var seenDone = null;
+		var seenApr = new Set();
+
+		function markAllRead(store) {
+			rpc("dsh-task-capsule/notify", "read", {}).then(function () { return store.refresh(); }).catch(function (e) {
+				console.error("[dsh-task-capsule] mark read failed:", e && e.message);
+			});
+		}
 
 		function useStore(store) {
 			var state = react.useState(0);
@@ -283,21 +291,6 @@ window.__ModuleLoader__.load({
 				return store.subscribe(function () { bump(function (n) { return n + 1; }); });
 			}, [store]);
 			return store;
-		}
-		// 轮询驱动：overlay 挂载期间常驻
-		function usePolling(store, intervalOf) {
-			react.useEffect(function () {
-				var stopped = false;
-				var timer = null;
-				function loop() {
-					store.refresh().then(function () {
-						if (stopped) return;
-						timer = setTimeout(loop, intervalOf(store));
-					});
-				}
-				loop();
-				return function () { stopped = true; if (timer) clearTimeout(timer); };
-			}, [store]);
 		}
 		// runStore 全局轮询（胶囊与侧栏入口共享，避免各自轮询/首页无胶囊时停摆）；apply 启停
 		var runPollStop = null;
@@ -433,13 +426,18 @@ window.__ModuleLoader__.load({
 			} else {
 				// 空闲占位：头部位置稳定，明确「当前无任务」；点击仍可翻最近完成
 				cls += " plp-idle";
-				txt = "空闲 · 无任务";
-				title = recent.length > 0 ? "空闲 · 点击展开最近完成" : "暂无任务记录";
+				var unread = (st.stats && st.stats.unread) || 0;
+				txt = unread > 0 ? "空闲 · " + unread + " 条未读" : "空闲 · 无任务";
+				title = unread > 0 ? "空闲 · " + unread + " 条未读，点击展开" : (recent.length > 0 ? "空闲 · 点击展开最近完成" : "暂无任务记录");
 			}
 
 			function handleClick() {
 				if (active.length === 1) { openSession(active[0].sessionId); return; }
-				setPopOpen(function (v) { return !v; });
+				setPopOpen(function (v) {
+					var next = !v;
+					if (next) markAllRead(runStore); // 展开即已读
+					return next;
+				});
 			}
 
 			return h("span", { className: "plp-wrap" },
@@ -468,54 +466,77 @@ window.__ModuleLoader__.load({
 		function ToastStack(props) {
 			var store = useStore(notifyStore);
 			var pane = useConversationPane();
-			usePolling(notifyStore, function (s) {
-				var st2 = s.snap;
-				if (s.error) return 15000;
-				return st2 && st2.active && st2.active.length > 0 ? 2000 : 4000;
-			});
+			// 轮询交给全局的 startRunPolling（同一个 store），这里不再重复拉
 			var toastsState = react.useState([]);
 			var toasts = toastsState[0], setToasts = toastsState[1];
-			var seenDoneRef = react.useRef(null); // Set(key)；首帧初始化避免补弹历史
-			var seenAprRef = react.useRef(new Set());
 			var timersRef = react.useRef(new Map());
 
 			var st = store.snap;
 			var cfg = (st && st.config) || {};
 
+			// 闸门：正盯着屏幕时发生的完成/出错不打扰（只记未读）；离开期间攒下的，回来结算成一张卡
+			var FRESH_MS = 10000;
 			react.useEffect(function () {
 				if (!st) return;
-				if (!seenDoneRef.current) {
-					seenDoneRef.current = new Set((st.recent || []).map(function (r) { return r.sessionId + ":" + r.endTime; }));
+				var visible = typeof document === "undefined" ? true : !document.hidden;
+				var focused = typeof document === "undefined" || typeof document.hasFocus !== "function" ? true : document.hasFocus();
+				var watching = visible && focused;
+
+				// 首帧：已有记录与挂着的审批一律视为已知，刷新页面不补弹
+				if (!seenDone) {
+					seenDone = new Set((st.recent || []).map(function (r) { return r.sessionId + ":" + r.endTime; }));
+					for (var t0 of (st.active || [])) {
+						for (var a0 of (t0.approvals || [])) seenApr.add(t0.sessionId + ":" + a0.id);
+					}
 					return;
 				}
-				var added = [];
-				// 完成/出错
+
+				var pending = [];
 				for (var r of (st.recent || [])) {
 					var key = r.sessionId + ":" + r.endTime;
-					if (seenDoneRef.current.has(key)) continue;
-					seenDoneRef.current.add(key);
-					if (seenDoneRef.current.size > 500) seenDoneRef.current = new Set(Array.from(seenDoneRef.current).slice(-200));
+					if (seenDone.has(key)) continue;
+					seenDone.add(key);
+					if (seenDone.size > 500) seenDone = new Set(Array.from(seenDone).slice(-200));
 					var ok = isSuccessEnd(r.endReason);
 					if (ok ? cfg.notifyOnComplete === false : cfg.notifyOnError === false) continue;
-					added.push({
+					// 眼前正在看的不打扰；超过 FRESH_MS 才当"离开期间攒下的"
+					var age = Date.now() - (Number(r.endTime) || 0);
+					if (watching && age < FRESH_MS) continue;
+					pending.push({
 						id: key,
 						kind: ok ? "done" : "error",
+						ok: ok,
 						title: (ok ? "✅ 完成：" : "❌ " + endLabel(r.endReason) + "：") + (r.title || "(无标题)"),
-						meta: fmtDur(r.duration) + " · ↧" + fmtCompact(r.inputTokens) + " ↥" + fmtCompact(r.outputTokens) + (r.errorMessage ? " · " + truncate(r.errorMessage, 60) : ""),
+						meta: fmtDur(r.duration) + (r.errorMessage ? " · " + truncate(r.errorMessage, 60) : ""),
 						sessionId: r.sessionId,
+						endReason: r.endReason,
+						duration: r.duration || 0,
 					});
-					if (cfg.soundNotify !== false) playSound(cfg.soundEffect, ok ? "ok" : "error");
-					if (cfg.systemNotify && (cfg.systemNotifyAlways || (typeof document !== "undefined" && document.hidden))) {
-						systemNotify((ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(r.endReason)), (r.title || "") + " · " + fmtDur(r.duration), "dsh-task-capsule-" + key);
-					}
 				}
-				// 等待确认
+
+				var added = [];
+				// 多条积压合并成一张：闸门放开后不该被五个"完成"糊脸
+				if (pending.length >= 2) {
+					var badCount = pending.reduce(function (n, x) { return n + (x.ok ? 0 : 1); }, 0);
+					added.push({
+						id: "batch:" + pending[pending.length - 1].id + ":" + pending.length,
+						kind: badCount > 0 ? "error" : "done",
+						title: "🔔 " + pending.length + " 个任务已结束" + (badCount > 0 ? "（" + badCount + " 个异常）" : "（全部完成）"),
+						meta: "最长 " + fmtDur(Math.max.apply(null, pending.map(function (x) { return x.duration || 0; }))) + "｜详情见胶囊下拉",
+						sessionId: pending[0].sessionId,
+					});
+				} else if (pending.length === 1) {
+					added.push(pending[0]);
+				}
+
+				var confirmCount = 0;
 				if (cfg.notifyOnConfirm !== false) {
 					for (var t of (st.active || [])) {
 						for (var a of (t.approvals || [])) {
 							var akey = t.sessionId + ":" + a.id;
-							if (seenAprRef.current.has(akey)) continue;
-							seenAprRef.current.add(akey);
+							if (seenApr.has(akey)) continue;
+							seenApr.add(akey);
+							confirmCount++;
 							added.push({
 								id: akey,
 								kind: "confirm",
@@ -523,13 +544,10 @@ window.__ModuleLoader__.load({
 								meta: truncate(a.reason || t.title || "", 80),
 								sessionId: t.sessionId,
 							});
-							if (cfg.soundNotify !== false) playSound("ding", "ok");
-							if (cfg.systemNotify && (cfg.systemNotifyAlways || (typeof document !== "undefined" && document.hidden))) {
-								systemNotify("✋ dsh 任务等待确认", (a.toolName || "") + " · " + truncate(t.title || "", 60), "dsh-task-capsule-" + akey);
-							}
 						}
 					}
 				}
+
 				if (added.length > 0) {
 					setToasts(function (prev) { return prev.concat(added).slice(-5); });
 					var stay = Number.isFinite(cfg.notifyStayMs) ? cfg.notifyStayMs : 8000;
@@ -541,6 +559,19 @@ window.__ModuleLoader__.load({
 							}, stay, item.id);
 							timersRef.current.set(item.id, timer);
 						}
+					}
+					// 每次刷新最多响一次：多任务同时结束不再叠成一团噪音
+					if (cfg.soundNotify !== false) {
+						if (confirmCount > 0) playSound("ding", "ok");
+						else playSound(cfg.soundEffect, pending.length > 0 && !pending[0].ok ? "error" : "ok");
+					}
+					if (cfg.systemNotify && (cfg.systemNotifyAlways || !watching)) {
+						var head = confirmCount > 0
+							? "✋ dsh 任务等待确认"
+							: (pending.length >= 2 ? "🔔 " + pending.length + " 个任务已结束"
+								: (pending.length === 1 ? (pending[0].ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(pending[0].endReason)) : ""));
+						var body = confirmCount > 0 ? (confirmCount + " 个工具在等确认") : (pending.length > 0 ? (pending[0].title || "") : "");
+						if (head) systemNotify(head, body, "dsh-task-capsule-batch");
 					}
 				}
 			}, [st]);

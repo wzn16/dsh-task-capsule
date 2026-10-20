@@ -8,7 +8,9 @@
 //   const off = tracker.onFinish((rec) => {}) // 任务结束回调
 //   tracker.dispose()                        // 退订会话事件
 
-/** 最近完成记录保留条数（新→旧）。 */
+import { createLedger } from './ledger.js'
+
+/** 内存里最近完成记录保留条数（新→旧）；持久层另有 1000 条上限。 */
 const MAX_COMPLETED = 30
 
 export function createTracker(ctx) {
@@ -16,6 +18,19 @@ export function createTracker(ctx) {
   const completedSessions = [] // 最近完成（新→旧）
   const finishListeners = new Set()
   const disposers = []
+
+  // 账本：收尾记录落盘，重启后仍能看到历史与未读；顺带把崩溃前挂着的任务补成 interrupted
+  const ledger = createLedger({ log: console })
+  try {
+    ledger.load()
+    const recovered = ledger.recoverOpen()
+    if (recovered.length > 0) {
+      for (const r of recovered.slice().reverse()) completedSessions.unshift(r)
+      console.log('[dsh-task-capsule] recovered', recovered.length, 'interrupted task(s) from open.json')
+    }
+  } catch (e) {
+    console.error('[dsh-task-capsule] ledger load failed:', (e && e.message) || String(e))
+  }
 
   function num(v) { return typeof v === 'number' && Number.isFinite(v) ? v : 0 }
 
@@ -66,16 +81,12 @@ export function createTracker(ctx) {
       toolCalls: 0,
       models: new Set(),
       provider: '',
-      inputTokens: 0,
-      outputTokens: 0,
-      totalTokens: 0,
-      reasoningTokens: 0,
-      cacheReadTokens: 0,
       endReason: '',
       errorMessage: '',
       firstPrompt: '',
       // 工具等待用户确认（dsh 会话流 approval/asked）：浏览器侧据此弹"需确认"通知
       approvals: new Map(), // approvalId -> { toolName, reason, askedAt }
+      approvalLog: [], // 已决审批：{ id, toolName, askedAt, decidedAt, waitMs }
       phase: 'think',
       phaseAt: Date.now(),
       lastActivityAt: Date.now(),
@@ -105,18 +116,18 @@ export function createTracker(ctx) {
       toolCalls: session.toolCalls,
       models: [...session.models],
       provider: session.provider,
-      inputTokens: session.inputTokens,
-      outputTokens: session.outputTokens,
-      totalTokens: session.totalTokens,
-      reasoningTokens: session.reasoningTokens,
-      cacheReadTokens: session.cacheReadTokens,
       endReason: session.endReason,
       errorMessage: session.errorMessage,
       // 助手正文不下发：浏览器侧零引用，留着等于每次轮询都把原文发一遍
+      approvals: session.approvalLog.slice(),
+      approvalCount: session.approvalLog.length,
+      approvalWaitMs: session.approvalLog.reduce((sum, a) => sum + (Number(a.waitMs) || 0), 0),
       startTime: session.startTime,
       endTime,
     }
-    completedSessions.unshift(record)
+    // 落盘优先：先写账本再广播，浏览器刷新/重启也能看到这条
+    const saved = ledger.append(record)
+    completedSessions.unshift(saved)
     if (completedSessions.length > MAX_COMPLETED) completedSessions.pop()
     for (const fn of finishListeners) {
       try { fn(record) } catch (e) {
@@ -177,7 +188,16 @@ export function createTracker(ctx) {
       }
       s.lastActivityAt = now
     } else if (event.type === 'approval/decided' && event.data) {
-      s.approvals.delete(typeof event.data.id === 'string' ? event.data.id : '')
+      const aid = typeof event.data.id === 'string' ? event.data.id : ''
+      const pend = s.approvals.get(aid)
+      if (pend) {
+        // 审批等待时长：原生不记这个账，只有持续记录才拿得到
+        pend.decidedAt = now
+        pend.waitMs = Math.max(0, now - (pend.askedAt || now))
+        s.approvalLog.push({ id: aid, toolName: pend.toolName, askedAt: pend.askedAt, decidedAt: pend.decidedAt, waitMs: pend.waitMs })
+        if (s.approvalLog.length > 20) s.approvalLog.shift()
+      }
+      s.approvals.delete(aid)
     } else if (event.type === 'tool/call') {
       s.toolCalls++
       s.phase = phaseOfToolName(event.data && event.data.name)
@@ -188,14 +208,7 @@ export function createTracker(ctx) {
         if (text) s.firstPrompt = text
       }
     } else if (event.type === 'assistant/message' && event.data) {
-      const usage = event.data.usage
-      if (usage) {
-        s.inputTokens += num(usage.inputTokens)
-        s.outputTokens += num(usage.outputTokens)
-        s.totalTokens += num(usage.inputTokens) + num(usage.outputTokens)
-        s.reasoningTokens += num(usage.reasoningTokens)
-        s.cacheReadTokens += num(usage.cacheReadTokens)
-      }
+      // token 由 DSH 自带会话统计条负责，本插件不采集、不落盘、不下发
       // 助手正文不再留存：账本只记计数与结束原因，正文既不落盘也不下发
     } else if (event.type === 'request/context' && event.data) {
       if (event.data.provider) s.provider = event.data.provider
@@ -274,22 +287,32 @@ export function createTracker(ctx) {
           toolCalls: s.toolCalls,
           models: [...s.models],
           provider: s.provider,
-          inputTokens: s.inputTokens,
-          outputTokens: s.outputTokens,
-          totalTokens: s.totalTokens,
           phase: s.phase,
           phaseAt: s.phaseAt,
           lastActivityAt: s.lastActivityAt,
           approvals: [...s.approvals.entries()].map(([id, v]) => ({ id, ...v })),
         })
       }
-      return { now: at, active, recent: completedSessions.slice(0, 20) }
+      // 最近完成以落盘账本为准（重启后仍在），内存数组只做加速
+      const stored = ledger.records()
+      const recent = stored.length > 0 ? stored.slice(0, 20) : completedSessions.slice(0, 20)
+      // 运行中快照顺手落盘（内部 5s 节流），崩溃后靠它恢复
+      ledger.saveOpen(active, at)
+      return { now: at, active, recent, stats: ledger.stats() }
     },
     /** 任务结束订阅（返回退订函数）；异常不会打断其他订阅者。 */
     onFinish(fn) {
       if (typeof fn !== 'function') return () => {}
       finishListeners.add(fn)
       return () => { finishListeners.delete(fn) }
+    },
+    /** 标记已读（浏览器展开下拉时调用）。 */
+    markRead(at) {
+      return ledger.markRead(at)
+    },
+    /** 账本磁盘路径与统计（设置页/排障用）。 */
+    ledgerInfo() {
+      return { paths: ledger.paths, stats: ledger.stats() }
     },
     /** 退订会话事件（插件卸载时调用）。 */
     dispose() {

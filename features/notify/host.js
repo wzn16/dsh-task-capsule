@@ -112,6 +112,13 @@ export function setupNotify(ctx, tracker) {
             })
           }
 
+          if (method === 'read') {
+            // 展开下拉/看过即已读：未读由 lastReadAt 派生，不用单独维护计数
+            const at = typeof payload.at === 'number' && Number.isFinite(payload.at) ? payload.at : Date.now()
+            const lastReadAt = tracker.markRead(at)
+            return sendJson(res, 200, { ok: true, data: { lastReadAt, stats: tracker.ledgerInfo().stats } })
+          }
+
           if (method === 'config') {
             // 增量合并：只接受已知字段，类型不符忽略；整体写回 notify 段
             const cfg = readConfig(ctx)
