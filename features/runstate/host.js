@@ -1,6 +1,6 @@
 // dsh-task-capsule · 功能【运行状态胶囊】· 宿主半部
 // 只读：把会话级任务追踪快照下发给客户端胶囊（/dsh-task-capsule/runstate/status）。
-import { sendJson, readBody } from '../../src/host-core.js'
+import { sendJson, readBody, assertTrustedRequest } from '../../src/host-core.js'
 
 export function setupRunstate(ctx, tracker) {
   return ctx.inject(['webServer'], (wsCtx) => {
@@ -9,6 +9,7 @@ export function setupRunstate(ctx, tracker) {
       path: '/dsh-task-capsule/runstate',
       async handler(req, res) {
         try {
+          assertTrustedRequest(req) // 先过信任门，再读任何内容
           const url = new URL(req.url || '/', 'http://dsh.internal')
           const method = url.pathname.replace(/^\/dsh-task-capsule\/runstate\/?/, '').split('/')[0] || ''
           await readBody(req) // 读空请求体，避免连接上残留未消费数据
@@ -21,7 +22,7 @@ export function setupRunstate(ctx, tracker) {
           console.error('[dsh-task-capsule] runstate HTTP error:', status, e && e.message)
           return sendJson(res, status, {
             ok: false,
-            error: { code: status >= 500 ? 'internal' : 'bad-request', message: (e && e.message) || String(e) },
+            error: { code: status >= 500 ? 'internal' : 'bad-request', message: status >= 500 ? 'internal error' : ((e && e.message) || String(e)) },
           })
         }
       },

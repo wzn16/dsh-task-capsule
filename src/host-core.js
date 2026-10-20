@@ -40,6 +40,38 @@ export const CapsuleConfig = z.object({
 export const SOUND_EFFECTS = ['chime', 'ding']
 
 /**
+ * 请求信任门。
+ * 宿主只对 /api 与首页做了 Host/Origin/Sec-Fetch-Site 校验，webServer 的 prefix 路由命中即派发，
+ * 所以插件自己的路由必须自己守：非本机 Host、跨源 Origin、cross-site 一律 403。
+ */
+const LOOPBACK_HOST = /^(127(?:\.\d{1,3}){3}|localhost|\[::1\])(:\d{1,5})?$/i
+const LOOPBACK_ORIGIN = /^https?:\/\/(127(?:\.\d{1,3}){3}|localhost|\[::1\])(:\d{1,5})?$/i
+
+/** 构造带 HTTP 状态码的错误。 */
+export function denied(status, message) {
+  const e = new Error(message)
+  e.statusCode = status
+  return e
+}
+
+/** 不是本机同源来的请求直接拒——在 readBody 之前调用。 */
+export function assertTrustedRequest(req) {
+  const headers = (req && req.headers) || {}
+  const host = String(headers.host || '')
+  const origin = headers.origin
+  const site = String(headers['sec-fetch-site'] || '')
+  if (site === 'cross-site') throw denied(403, '跨站请求被拒绝')
+  if (!LOOPBACK_HOST.test(host)) throw denied(403, '非本机 Host 被拒绝')
+  // Origin 必须与本请求 authority 完全一致：只认回环网段会放行同机其它端口的页面
+  if (origin) {
+    if (!LOOPBACK_ORIGIN.test(origin)) throw denied(403, '跨源请求被拒绝')
+    let authority = ''
+    try { authority = new URL(origin).host } catch { throw denied(403, '跨源请求被拒绝') }
+    if (authority !== host) throw denied(403, '跨源请求被拒绝')
+  }
+}
+
+/**
  * 一次性只读迁移：从 dsh-dock 的 notify 段拷贝用户旧配置到本插件命名空间。
  * 只写 dsh-task-capsule 自己的段，绝不写回 dsh-dock；dsh-dock 未安装/无旧值时静默跳过。
  */
@@ -81,7 +113,9 @@ export function readBody(req) {
     req.on('data', (c) => {
       size += c.length
       if (size > 2 * 1024 * 1024) {
-        reject(new Error('请求体过大'))
+        const err = new Error('请求体过大')
+        err.statusCode = 400 // 客户端错误，别报成 500
+        reject(err)
         req.destroy()
         return
       }
@@ -91,7 +125,9 @@ export function readBody(req) {
       try {
         resolve(chunks.length === 0 ? {} : JSON.parse(Buffer.concat(chunks).toString('utf8')))
       } catch (e) {
-        reject(new Error('请求体不是合法 JSON'))
+        const err = new Error('请求体不是合法 JSON')
+        err.statusCode = 400
+        reject(err)
       }
     })
     req.on('error', reject)

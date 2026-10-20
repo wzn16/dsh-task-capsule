@@ -8,7 +8,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { CAPSULE_NS, SOUND_EFFECTS, sendJson, readBody } from '../../src/host-core.js'
+import { CAPSULE_NS, SOUND_EFFECTS, sendJson, readBody, assertTrustedRequest } from '../../src/host-core.js'
 
 // 默认配置（与 schema 默认值一致；settings.get 未挂载时的兜底）
 function defaultConfig() {
@@ -40,9 +40,31 @@ function loadOwnConfig() {
 }
 
 function saveOwnConfig(notify) {
-  const tmp = NOTIFY_FILE + '.tmp'
-  fs.writeFileSync(tmp, JSON.stringify({ notify }, null, 2))
+  // tmp 名带 pid：并发写不互相覆盖；0600：只让当前用户读
+  const tmp = NOTIFY_FILE + '.' + process.pid + '.tmp'
+  fs.writeFileSync(tmp, JSON.stringify({ notify }, null, 2), { mode: 0o600 })
   fs.renameSync(tmp, NOTIFY_FILE)
+}
+
+const CONFIG_TYPES = {
+  notifyOnComplete: 'boolean', notifyOnError: 'boolean', notifyOnConfirm: 'boolean',
+  systemNotify: 'boolean', systemNotifyAlways: 'boolean', soundNotify: 'boolean',
+  notifyStayMs: 'number', soundEffect: 'string', migratedFromDock: 'boolean',
+}
+
+// 只按声明类型取值：手改或撕裂的 JSON 不能把字符串当开关、不能把 setTimeout 撑成溢出值
+function applyConfig(cfg, src) {
+  if (!src || typeof src !== 'object') return cfg
+  for (const key of Object.keys(CONFIG_TYPES)) {
+    const v = src[key]
+    if (v === undefined) continue
+    const want = CONFIG_TYPES[key]
+    if (want === 'boolean' && typeof v === 'boolean') cfg[key] = v
+    else if (want === 'number' && typeof v === 'number' && Number.isFinite(v)) {
+      cfg[key] = Math.max(0, Math.min(600000, Math.round(v)))
+    } else if (want === 'string' && SOUND_EFFECTS.includes(v)) cfg[key] = v
+  }
+  return cfg
 }
 
 // 读 notify 配置：自有文件优先；文件不存在时回退 settings 旧值；再不行用默认
@@ -55,12 +77,7 @@ function readConfig(ctx) {
       const v = settings && typeof settings.get === 'function' ? settings.get(CAPSULE_NS) : null
       n = v && typeof v === 'object' && v.notify && typeof v.notify === 'object' ? v.notify : null
     }
-    if (n) {
-      for (const key of Object.keys(cfg)) {
-        if (n[key] !== undefined) cfg[key] = n[key]
-      }
-      if (!SOUND_EFFECTS.includes(cfg.soundEffect)) cfg.soundEffect = 'chime'
-    }
+    applyConfig(cfg, n)
   } catch { /* 读取失败，用默认 */ }
   return cfg
 }
@@ -83,6 +100,7 @@ export function setupNotify(ctx, tracker) {
       path: '/dsh-task-capsule/notify',
       async handler(req, res) {
         try {
+          assertTrustedRequest(req) // 先过信任门，再读任何内容
           const url = new URL(req.url || '/', 'http://dsh.internal')
           const method = url.pathname.replace(/^\/dsh-task-capsule\/notify\/?/, '').split('/')[0] || ''
           const payload = await readBody(req)
@@ -126,7 +144,7 @@ export function setupNotify(ctx, tracker) {
           console.error('[dsh-task-capsule] notify HTTP error:', status, e && e.message)
           return sendJson(res, status, {
             ok: false,
-            error: { code: status >= 500 ? 'internal' : 'bad-request', message: (e && e.message) || String(e) },
+            error: { code: status >= 500 ? 'internal' : 'bad-request', message: status >= 500 ? 'internal error' : ((e && e.message) || String(e)) },
           })
         }
       },

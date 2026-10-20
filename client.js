@@ -108,16 +108,37 @@ window.__ModuleLoader__.load({
 		//#endregion
 
 		//#region helpers
+		// 请求超时：无超时时一次挂起会让 loading 永不复位、两个 store 永久停摆
+		var RPC_TIMEOUT_MS = 9000;
 		function rpc(prefix, method, args) {
-			return fetch("/" + prefix + "/" + method, {
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify(args === undefined ? {} : args),
-			}).then(function (res) {
-				return res.json().catch(function () { return {}; }).then(function (data) {
+			var ctrl = typeof AbortController === "function" ? new AbortController() : null;
+			var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, RPC_TIMEOUT_MS) : null;
+			function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
+			var request;
+			try {
+				request = fetch("/" + prefix + "/" + method, {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify(args === undefined ? {} : args),
+					signal: ctrl ? ctrl.signal : undefined,
+				});
+			} catch (e) {
+				clearTimer(); // fetch 同步抛（环境无 fetch / URL 非法）也不能漏掉定时器
+				throw e;
+			}
+			return request.then(function (res) {
+				// body 读到一半被 abort 时别吞成 {}，否则会把超时误报成 HTTP 200
+				return res.json().catch(function (err) { if (err && err.name === "AbortError") throw err; return {}; }).then(function (data) {
 					if (res.ok && data && data.ok === true) return data.data;
 					throw new Error((data && data.error && data.error.message) || ("HTTP " + res.status));
 				});
+			}).then(function (data) {
+				clearTimer();
+				return data;
+			}, function (e) {
+				clearTimer();
+				if (e && e.name === "AbortError") throw new Error("请求超时（" + (RPC_TIMEOUT_MS / 1000) + "s）");
+				throw e;
 			});
 		}
 
@@ -128,9 +149,11 @@ window.__ModuleLoader__.load({
 		var END_LABELS = {
 			completed: "完成", error: "出错", aborted: "已中止",
 			blocked: "受阻", "max-tokens": "达输出上限", interrupted: "中断",
+			disposed: "会话已关闭", unknown: "结果未知",
 		};
-		function endLabel(r) { return END_LABELS[r] || "完成"; }
-		function isSuccessEnd(r) { return !r || r === "completed"; }
+		function endLabel(r) { return END_LABELS[r] || "结果未知"; }
+		// 只有明确的 completed 才算成功：空 endReason（会话被关闭/agent 销毁）曾被判成功，属假阳性
+		function isSuccessEnd(r) { return r === "completed"; }
 
 		function fmtCompact(n) {
 			n = Number(n) || 0;
@@ -231,16 +254,22 @@ window.__ModuleLoader__.load({
 					var self = this;
 					return function () { self.listeners.delete(fn); };
 				},
-				emit: function () { for (var fn of this.listeners) fn(); },
+				// 订阅者抛错会跳过 refresh 的第三跳，loading 永久 true；这里逐个兜住
+				emit: function () {
+					for (var fn of this.listeners) {
+						try { fn(); } catch (e) { console.error("[dsh-task-capsule] store listener error:", e && e.message); }
+					}
+				},
 				refresh: function () {
 					var self = this;
 					if (self.loading) return Promise.resolve();
 					self.loading = true;
-					return fetcher().then(function (data) {
-						self.snap = data; self.error = null; self.loading = false; self.emit();
-					}).catch(function (e) {
-						self.error = (e && e.message) || String(e); self.loading = false; self.emit();
-					});
+					// loading 必须在两条路径上都复位（含同步抛错），否则一次异常即永久停摆
+					return Promise.resolve().then(fetcher).then(function (data) {
+						self.snap = data; self.error = null; self.emit();
+					}, function (e) {
+						self.error = (e && e.message) || String(e); self.emit();
+					}).then(function () { self.loading = false; });
 				},
 			};
 		}
@@ -309,13 +338,23 @@ window.__ModuleLoader__.load({
 			var state = react.useState(null);
 			var el = state[0], setEl = state[1];
 			react.useEffect(function () {
+				// 宿主对每个 slot 渲染 [data-slot="<slot名>"]；data-pane 在官方壳里已不存在，留作旧版回退
+				// 宿主 slot 名是点分路径（asar 里核实：main.conversation / conversation.session）；
+				// data-slot="conversation" 与 data-pane 都零命中，后者只作旧版回退
+				var PANE_SELECTORS = ['[data-slot="main.conversation"]', '[data-slot="conversation.session"]', '[data-pane="conversation"]'];
+				var tries = 0;
 				function find() {
-					var node = document.querySelector('[data-pane="conversation"]');
+					var node = null;
+					for (var i = 0; i < PANE_SELECTORS.length && !node; i++) node = document.querySelector(PANE_SELECTORS[i]);
 					setEl(node && node.isConnected ? node : null);
 					return !!node;
 				}
 				if (find()) return;
-				var t = setInterval(function () { if (find()) clearInterval(t); }, 800);
+				// 最多探 20 次（16s）就停，避免空转到页面结束
+				var t = setInterval(function () {
+					tries++;
+					if (find() || tries >= 20) { clearInterval(t); }
+				}, 800);
 				return function () { clearInterval(t); };
 			}, []);
 			return el;
@@ -410,8 +449,10 @@ window.__ModuleLoader__.load({
 					className: cls,
 					onClick: handleClick,
 					title: title,
-					"aria-haspopup": "true",
-					"aria-expanded": popOpen,
+					"aria-label": (txt ? txt + "。" : "") + title,
+					// 单任务时点击直接跳会话、不弹菜单：声明 haspopup 会让读屏语义出错
+					"aria-haspopup": active.length === 1 ? undefined : "true",
+					"aria-expanded": active.length === 1 ? undefined : popOpen,
 				},
 					h("span", { className: "plp-dot", style: dotColor ? { background: dotColor } : null }),
 					txt ? h("span", { className: "plp-txt" }, txt) : null),
@@ -515,9 +556,11 @@ window.__ModuleLoader__.load({
 				setToasts(function (prev) { return prev.filter(function (x) { return x.id !== id; }); });
 			}
 
-			if (toasts.length === 0) return null;
+			// aria-live 容器常驻：与内容同时挂载时部分读屏不播报，空态也保留容器
 			// 卡片本体不可点（防误触）：跳转走显式「前往会话」按钮
-			var stackNode = h("div", { className: "pln-stack" + (pane ? "" : " pln-fixed"), "aria-live": "polite" }, toasts.map(function (t) {
+			// 切会话会换掉 pane 节点：渲染时再判一次 isConnected，失联就回 fixed
+			var livePane = pane && pane.isConnected ? pane : null;
+			var stackNode = h("div", { className: "pln-stack" + (livePane ? "" : " pln-fixed"), "aria-live": "polite", "aria-atomic": "false" }, toasts.map(function (t) {
 				return h("div", {
 					key: t.id,
 					className: "pln-toast" + (t.kind === "error" ? " err" : t.kind === "confirm" ? " warn" : ""),
@@ -538,7 +581,7 @@ window.__ModuleLoader__.load({
 						onClick: function () { dismiss(t.id); },
 					}, "✕"));
 			}));
-			return pane ? reactDom.createPortal(stackNode, pane) : stackNode;
+			return livePane ? reactDom.createPortal(stackNode, livePane) : stackNode;
 		}
 		//#endregion
 
@@ -553,6 +596,7 @@ window.__ModuleLoader__.load({
 					className: "pls-sw" + (props.on ? " on" : ""),
 					role: "switch",
 					"aria-checked": !!props.on,
+					"aria-label": props.label,
 					onClick: props.onToggle,
 				}));
 		}
@@ -602,7 +646,7 @@ window.__ModuleLoader__.load({
 			return h("div", { className: "pls-root" },
 				h("div", { className: "pls-intro" },
 					"任务胶囊（任务两件套）：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
-					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。三功能常开、无独立开关；此处只配置通知行为。"),
+					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。两项功能常开、无独立开关；此处只配置通知行为。"),
 				h("div", { className: "pls-card" },
 					h(SwitchRow, {
 						label: "完成通知", desc: "任务正常结束时弹卡片",
@@ -646,6 +690,7 @@ window.__ModuleLoader__.load({
 						h("div", { className: "pls-label" }, h("div", null, "卡片停留时长")),
 						h("select", {
 							className: "pls-sel",
+							"aria-label": "卡片停留时长",
 							value: String(Number.isFinite(cfg.notifyStayMs) ? cfg.notifyStayMs : 8000),
 							onChange: function (e) { patch({ notifyStayMs: Number(e.target.value) }); },
 						},
@@ -658,6 +703,7 @@ window.__ModuleLoader__.load({
 						h("div", { className: "pls-label" }, h("div", null, "完成提示音音效")),
 						h("select", {
 							className: "pls-sel",
+							"aria-label": "完成提示音音效",
 							value: cfg.soundEffect || "chime",
 							onChange: function (e) { patch({ soundEffect: e.target.value }); },
 						},

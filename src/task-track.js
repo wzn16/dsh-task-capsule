@@ -73,7 +73,6 @@ export function createTracker(ctx) {
       cacheReadTokens: 0,
       endReason: '',
       errorMessage: '',
-      lastText: '',
       firstPrompt: '',
       // 工具等待用户确认（dsh 会话流 approval/asked）：浏览器侧据此弹"需确认"通知
       approvals: new Map(), // approvalId -> { toolName, reason, askedAt }
@@ -113,7 +112,7 @@ export function createTracker(ctx) {
       cacheReadTokens: session.cacheReadTokens,
       endReason: session.endReason,
       errorMessage: session.errorMessage,
-      lastText: session.lastText,
+      // 助手正文不下发：浏览器侧零引用，留着等于每次轮询都把原文发一遍
       startTime: session.startTime,
       endTime,
     }
@@ -160,7 +159,8 @@ export function createTracker(ctx) {
     }
     if (event.type === 'turn/end' && event.data && event.data.reason) {
       const reason = event.data.reason
-      s.endReason = (reason.kind || 'completed')
+      // 只有明确的 kind 才采信：空 kind 曾被兜成 completed，等于把未知当成功
+      s.endReason = (typeof reason.kind === 'string' && reason.kind) ? reason.kind : 'unknown'
       if (reason.kind === 'error' && reason.error) {
         const msg = (reason.error && (reason.error.message || reason.error.code)) || ''
         s.errorMessage = typeof msg === 'string' ? msg : String(msg)
@@ -196,10 +196,7 @@ export function createTracker(ctx) {
         s.reasoningTokens += num(usage.reasoningTokens)
         s.cacheReadTokens += num(usage.cacheReadTokens)
       }
-      if (event.data.message && event.data.message.content) {
-        const text = extractText(event.data.message.content)
-        if (text) s.lastText = text
-      }
+      // 助手正文不再留存：账本只记计数与结束原因，正文既不落盘也不下发
     } else if (event.type === 'request/context' && event.data) {
       if (event.data.provider) s.provider = event.data.provider
       if (event.data.model) s.models.add(event.data.model)
@@ -221,6 +218,9 @@ export function createTracker(ctx) {
         if (agent.options.provider) record.provider = agent.options.provider
       }
     } else if (status === 'idle') {
+      // 异常路径收尾时没有 endReason：标 unknown，避免被客户端当成成功
+      const rec = activeSessions.get(sid)
+      if (rec && !rec.endReason) rec.endReason = 'unknown'
       finishSession(sid)
     }
   }
@@ -246,7 +246,12 @@ export function createTracker(ctx) {
     disposers.push(sqCtx.on('agent/disposed', (payload) => {
       try {
         const sid = payload && payload.agent && payload.agent.id ? String(payload.agent.id) : ''
-        if (sid) finishSession(sid)
+        if (sid) {
+          // 会话被直接关闭：显式标 disposed，不让空 endReason 冒充完成
+          const rec = activeSessions.get(sid)
+          if (rec && !rec.endReason) rec.endReason = 'disposed'
+          finishSession(sid)
+        }
       } catch (err) {
         console.error('[dsh-task-capsule] task-track handle agent/disposed error', err)
       }
