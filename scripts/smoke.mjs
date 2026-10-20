@@ -10,10 +10,11 @@ import { fileURLToPath } from 'node:url'
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const need = {
   './src/host-core.js': ['CAPSULE_NS', 'PRESETS', 'PRESET_IDS', 'SOUND_EFFECTS', 'denied', 'assertTrustedRequest', 'sendJson', 'readBody'],
-  './src/ledger.js': ['SCHEMA_VERSION', 'createLedger', 'ledgerPaths', 'parseLedgerLines', 'countUnread', 'makeRecordId'],
+  './src/ledger.js': ['SCHEMA_VERSION', 'createLedger', 'ledgerPaths', 'parseLedgerLines', 'countUnread', 'makeRecordId', 'summarizeRecords'],
   './src/task-track.js': ['createTracker'],
   './features/runstate/host.js': ['setupRunstate'],
   './features/notify/host.js': ['setupNotify'],
+  './features/ledger/host.js': ['setupLedger'],
   './index.js': ['name', 'inject', 'apply'],
 }
 

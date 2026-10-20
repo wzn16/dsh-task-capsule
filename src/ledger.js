@@ -33,6 +33,35 @@ export function ledgerPaths() {
 /** 记录主键：同一会话同一结束时刻即同一条。 */
 const TOKEN_KEYS = ['inputTokens', 'outputTokens', 'totalTokens', 'reasoningTokens', 'cacheReadTokens']
 
+/** 一段记录区间的汇总（今日/对账都用它，纯函数，可测）。 */
+export function summarizeRecords(records) {
+  let durationMs = 0, steps = 0, toolCalls = 0, approvalWaitMs = 0, failures = 0, interrupted = 0, recovered = 0
+  let slowest = null
+  for (const r of records) {
+    durationMs += Number(r.duration) || 0
+    steps += Number(r.steps) || 0
+    toolCalls += Number(r.toolCalls) || 0
+    approvalWaitMs += Number(r.approvalWaitMs) || 0
+    // 中断（宿主重启/崩溃）与用户主动关会话，不算"没跑成"；只有真报错才计失败
+    const cut = r.endReason === 'interrupted' || r.endReason === 'disposed' || r.recovered === true
+    if (cut) interrupted++
+    else if (r.endReason !== 'completed') failures++
+    if (r.recovered) recovered++
+    if (!slowest || (Number(r.duration) || 0) > (Number(slowest.duration) || 0)) slowest = r
+  }
+  return {
+    count: records.length,
+    durationMs,
+    steps,
+    toolCalls,
+    approvalWaitMs,
+    failures,
+    interrupted,
+    recovered,
+    slowest: slowest ? { recordId: slowest.recordId, title: slowest.title || '', duration: Number(slowest.duration) || 0 } : null,
+  }
+}
+
 /** 清掉历史记录里的 token 字段（v0.5 起不再采集），返回清掉的字段数。 */
 export function stripTokenFields(records) {
   let n = 0

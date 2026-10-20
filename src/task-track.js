@@ -8,7 +8,7 @@
 //   const off = tracker.onFinish((rec) => {}) // 任务结束回调
 //   tracker.dispose()                        // 退订会话事件
 
-import { createLedger } from './ledger.js'
+import { createLedger, summarizeRecords } from './ledger.js'
 
 /** 内存里最近完成记录保留条数（新→旧）；持久层另有 1000 条上限。 */
 const MAX_COMPLETED = 30
@@ -305,6 +305,21 @@ export function createTracker(ctx) {
       if (typeof fn !== 'function') return () => {}
       finishListeners.add(fn)
       return () => { finishListeners.delete(fn) }
+    },
+    /** 账本区间查询：账本面板与对账都走这里，只读。 */
+    ledgerQuery(opts) {
+      const o = opts || {}
+      const since = Number(o.since) || 0
+      const until = Number(o.until) || (Date.now() + 1)
+      const limit = Math.max(1, Math.min(100, Number(o.limit) || 10))
+      const offset = Math.max(0, Number(o.offset) || 0)
+      const all = ledger.records().filter((r) => (r.endTime || 0) >= since && (r.endTime || 0) < until)
+      return {
+        since, until, offset, limit,
+        total: all.length,
+        records: all.slice(offset, offset + limit),
+        summary: summarizeRecords(all),
+      }
     },
     /** 标记已读（浏览器展开下拉时调用）。 */
     markRead(at) {

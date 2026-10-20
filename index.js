@@ -8,6 +8,7 @@
 import { createTracker } from './src/task-track.js'
 import { setupRunstate } from './features/runstate/host.js'
 import { setupNotify } from './features/notify/host.js'
+import { setupLedger } from './features/ledger/host.js'
 
 export const name = 'dsh-task-capsule'
 
@@ -24,6 +25,7 @@ export function apply(ctx) {
   // 两个功能的宿主半部（各自注册 HTTP 路由，返回 disposer）
   disposers.push(setupRunstate(ctx, tracker))
   disposers.push(setupNotify(ctx, tracker))
+  disposers.push(setupLedger(ctx, tracker))
 
   console.log('[dsh-task-capsule] host half loaded; features: runstate, notify')
 

@@ -80,6 +80,13 @@ window.__ModuleLoader__.load({
 			".pls-seg-btn+.pls-seg-btn{border-left:1px solid var(--dsw-alias-border-l1,#d7dae0);}",
 			".pls-seg-btn.on{background:color-mix(in srgb,var(--pl-accent) 12%,transparent);font-weight:600;}",
 			".pls-sum{cursor:pointer;font-size:12px;color:var(--dsw-alias-label-secondary,#666);padding:2px 0;}",
+			".pls-ledger{gap:4px;}",
+			".pls-entry{border-top:1px solid var(--dsw-alias-border-l1,#e6e8ec);padding-top:4px;}",
+			".pls-entry-head{display:flex;align-items:center;gap:8px;width:100%;border:none;background:transparent;padding:6px 0;font-family:inherit;font-size:13px;color:inherit;cursor:pointer;text-align:left;}",
+			".pls-entry-head .dot{width:7px;height:7px;border-radius:50%;flex:none;}",
+			".pls-entry-head .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+			".pls-entry-head .m{flex:none;font-size:12px;color:var(--dsw-alias-label-secondary,#666);}",
+			".pls-entry-body{display:flex;flex-direction:column;gap:3px;padding:0 0 8px 15px;font-size:12px;color:var(--dsw-alias-label-secondary,#666);}",
 			".pls-sw{flex:none;position:relative;width:34px;height:19px;border-radius:999px;border:1px solid var(--dsw-alias-border-l2,#ccc);background:var(--dsw-alias-bg-layer-2,#f4f4f4);cursor:pointer;padding:0;transition:background .18s,border-color .18s;}",
 			".pls-sw::after{content:\"\";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .35);transition:transform .18s;}",
 			".pls-sw.on{background:var(--pl-ok);border-color:transparent;}",
@@ -809,7 +816,106 @@ window.__ModuleLoader__.load({
 							onChange: function (e) { patch({ soundEffect: e.target.value }); },
 						},
 							h("option", { value: "chime" }, "chime（双音）"),
-							h("option", { value: "ding" }, "ding（单音）")))));
+							h("option", { value: "ding" }, "ding（单音）")))),
+				h(LedgerPanel, null));
+		}
+		// 账本面板：今日汇总 + 最近记录 + 详情 + 复制摘要，挂在设置区里（不新开页面，守住一寸地）
+		function todayStart() {
+			var d = new Date();
+			d.setHours(0, 0, 0, 0);
+			return d.getTime();
+		}
+
+		function summarizeLine(s) {
+			if (!s || !s.count) return "今天还没有完成任务。";
+			var parts = ["今天 " + s.count + " 个任务", "共 " + fmtDur(s.durationMs)];
+			if (s.approvalWaitMs > 0) parts.push("等你确认 " + fmtDur(s.approvalWaitMs));
+			if (s.failures > 0) parts.push(s.failures + " 个没跑成");
+			if (s.interrupted > 0) parts.push(s.interrupted + " 个中断" + (s.recovered > 0 ? "（含 " + s.recovered + " 个重启恢复）" : ""));
+			return parts.join(" · ");
+		}
+
+		function LedgerPanel() {
+			var state = react.useState({ loading: true, error: null, records: [], total: 0, summary: null });
+			var view = state[0], setView = state[1];
+			var openState = react.useState(null);
+			var openId = openState[0], setOpenId = openState[1];
+			var copyState = react.useState("");
+			var copied = copyState[0], setCopied = copyState[1];
+
+			function load(offset) {
+				setView(function (v) { return Object.assign({}, v, { loading: true, error: null }); });
+				rpc("dsh-task-capsule/ledger", "query", { since: todayStart(), limit: 10, offset: offset || 0 }).then(function (data) {
+					setView(function (v) {
+						return {
+							loading: false, error: null,
+							records: offset ? v.records.concat(data.records || []) : (data.records || []),
+							total: data.total || 0, summary: data.summary || null,
+						};
+					});
+				}).catch(function (e) {
+					setView(function (v) { return Object.assign({}, v, { loading: false, error: (e && e.message) || String(e) }); });
+				});
+			}
+			react.useEffect(function () { load(0); }, []);
+
+			function copy(r) {
+				var text = [
+					r.title || "(无标题)",
+					endLabel(r.endReason),
+					fmtDur(r.duration),
+					(r.steps || 0) + " 步 / " + (r.toolCalls || 0) + " 次工具",
+					r.approvalWaitMs ? "审批等待 " + fmtDur(r.approvalWaitMs) : "",
+				].filter(Boolean).join("｜");
+				try {
+					if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
+					else {
+						var ta = document.createElement("textarea");
+						ta.value = text;
+						document.body.appendChild(ta);
+						ta.select();
+						document.execCommand("copy");
+						ta.remove();
+					}
+					setCopied(r.recordId);
+					setTimeout(function () { setCopied(""); }, 1500);
+				} catch (e) { console.error("[dsh-task-capsule] copy failed:", e && e.message); }
+			}
+
+			if (view.error) {
+				return h("div", { className: "pls-card" },
+					h("div", { className: "pls-label" }, h("div", null, "任务账本 · 今天")),
+					h("div", { className: "pls-desc" }, "读取失败：" + view.error),
+					h("button", { type: "button", className: "pls-btn", onClick: function () { load(0); } }, "重试"));
+			}
+
+			return h("div", { className: "pls-card pls-ledger" },
+				h("div", { className: "pls-label" }, h("div", null, "任务账本 · 今天")),
+				h("div", { className: "pls-desc" }, summarizeLine(view.summary)),
+				view.records.map(function (r) {
+					var open = openId === r.recordId;
+					return h("div", { key: r.recordId, className: "pls-entry" },
+						h("button", {
+							type: "button",
+							className: "pls-entry-head",
+							"aria-expanded": open ? "true" : "false",
+							onClick: function () { setOpenId(open ? null : r.recordId); },
+						},
+							h("span", { className: "dot", style: { background: isSuccessEnd(r.endReason) ? "var(--pl-ok)" : (r.recovered ? "var(--pl-warn)" : "var(--pl-err)") } }),
+							h("span", { className: "t" }, (r.title || "(无标题)") + (r.recovered ? "（中断恢复）" : "")),
+							h("span", { className: "m" }, fmtDur(r.duration))),
+						open ? h("div", { className: "pls-entry-body" },
+							h("div", null, "结束：" + endLabel(r.endReason) + (r.errorMessage ? " · " + truncate(r.errorMessage, 80) : "")),
+							h("div", null, (r.steps || 0) + " 步 · " + (r.toolCalls || 0) + " 次工具调用" + (r.approvalCount ? " · " + r.approvalCount + " 次审批，共等 " + fmtDur(r.approvalWaitMs) : "")),
+							r.models && r.models.length ? h("div", null, "模型：" + r.models.join("、")) : null,
+							h("div", null, "开始 " + new Date(r.startTime || 0).toLocaleString() + " → 结束 " + new Date(r.endTime || 0).toLocaleString()),
+							h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? "已复制" : "复制摘要")) : null);
+				}),
+				(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, "今天还没有记录。") : null,
+				view.records.length < view.total
+					? h("button", { type: "button", className: "pls-btn", onClick: function () { load(view.records.length); } },
+						view.loading ? "正在读取…" : "加载更多（还有 " + (view.total - view.records.length) + " 条）")
+					: null);
 		}
 		//#endregion
 
