@@ -45,11 +45,11 @@ window.__ModuleLoader__.load({
 			".plp-txt{white-space:nowrap;}",
 			// 胶囊展开列表（多任务/最近完成）：从胶囊正下方临时下拉
 			".plp-pop{position:absolute;top:calc(100% + 8px);right:0;z-index:330;width:320px;max-width:calc(100vw - 24px);border:1px solid var(--dsw-alias-border-l1,#ddd);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-primary,#111);border-radius:12px;box-shadow:0 12px 40px rgb(0 0 0 / .18);padding:6px;display:flex;flex-direction:column;gap:2px;}",
-			".plp-pop-head{padding:6px 10px 4px;font-size:11px;color:var(--dsw-alias-label-tertiary,#888);}",
+			".plp-pop-head{padding:6px 10px 4px;font-size:12px;color:var(--dsw-alias-label-secondary,#666);}",
 			".plp-item{display:flex;align-items:center;gap:8px;border:none;background:transparent;border-radius:8px;padding:7px 10px;cursor:pointer;font-family:inherit;font-size:12px;color:var(--dsw-alias-label-primary,#111);text-align:left;}",
 			".plp-item:hover{background:color-mix(in srgb,var(--pl-accent) 8%,transparent);}",
 			".plp-item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}",
-			".plp-item .m{flex:none;font-size:11px;color:var(--dsw-alias-label-tertiary,#888);}",
+			".plp-item .m{flex:none;font-size:12px;color:var(--dsw-alias-label-secondary,#666);}",
 			".plp-item .dot{flex:none;width:7px;height:7px;border-radius:50%;}",
 			// ---- 通知卡栈 ----
 			".pln-stack{position:absolute;top:10px;right:10px;z-index:320;display:flex;flex-direction:column;gap:8px;width:340px;max-width:calc(100vw - 28px);pointer-events:none;}",
@@ -59,7 +59,7 @@ window.__ModuleLoader__.load({
 			".pln-toast.warn{border-left-color:var(--pl-warn);}",
 			"@keyframes pl-in{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:none;}}",
 			".pln-title{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
-			".pln-meta{margin-top:3px;font-size:11px;color:var(--dsw-alias-label-tertiary,#888);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
+			".pln-meta{margin-top:3px;font-size:12px;color:var(--dsw-alias-label-secondary,#666);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
 			".pln-close{position:absolute;top:6px;right:6px;border:none;background:transparent;color:var(--dsw-alias-label-tertiary,#888);border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:12px;}",
 			".pln-close:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.06));color:var(--dsw-alias-label-primary,#111);}",
 			// 跳转改为显式按钮（卡片本体不可点，防误触）
@@ -73,7 +73,13 @@ window.__ModuleLoader__.load({
 			".pls-card{border:1px solid var(--dsw-alias-border-l1,#ddd);background:var(--dsw-alias-bg-layer-1,#fff);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;}",
 			".pls-row{display:flex;align-items:center;gap:10px;}",
 			".pls-label{flex:1;}",
-			".pls-desc{color:var(--dsw-alias-label-tertiary,#888);font-size:11px;margin-top:2px;}",
+			".pls-desc{color:var(--dsw-alias-label-secondary,#666);font-size:12px;margin-top:2px;}",
+			".pls-preset{display:flex;flex-direction:column;gap:6px;}",
+			".pls-seg{display:flex;gap:0;border:1px solid var(--dsw-alias-border-l1,#d7dae0);border-radius:8px;overflow:hidden;}",
+			".pls-seg-btn{flex:1;border:none;background:transparent;padding:7px 10px;font-family:inherit;font-size:13px;color:var(--dsw-alias-label-primary,#111);cursor:pointer;}",
+			".pls-seg-btn+.pls-seg-btn{border-left:1px solid var(--dsw-alias-border-l1,#d7dae0);}",
+			".pls-seg-btn.on{background:color-mix(in srgb,var(--pl-accent) 12%,transparent);font-weight:600;}",
+			".pls-sum{cursor:pointer;font-size:12px;color:var(--dsw-alias-label-secondary,#666);padding:2px 0;}",
 			".pls-sw{flex:none;position:relative;width:34px;height:19px;border-radius:999px;border:1px solid var(--dsw-alias-border-l2,#ccc);background:var(--dsw-alias-bg-layer-2,#f4f4f4);cursor:pointer;padding:0;transition:background .18s,border-color .18s;}",
 			".pls-sw::after{content:\"\";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .35);transition:transform .18s;}",
 			".pls-sw.on{background:var(--pl-ok);border-color:transparent;}",
@@ -108,6 +114,22 @@ window.__ModuleLoader__.load({
 		//#endregion
 
 		//#region helpers
+		// 多标签租约：只有一个窗口播声音/发系统通知，避免两个窗口各响一次
+		var LEASE_KEY = "dsh-task-capsule.leader";
+		var TAB_ID = Math.random().toString(36).slice(2);
+		function isLeader() {
+			try {
+				var raw = localStorage.getItem(LEASE_KEY);
+				var v = raw ? JSON.parse(raw) : null;
+				var stale = !v || !v.id || Date.now() - (Number(v.at) || 0) > 4000;
+				if (stale || v.id === TAB_ID) {
+					localStorage.setItem(LEASE_KEY, JSON.stringify({ id: TAB_ID, at: Date.now() }));
+					return true;
+				}
+				return false;
+			} catch (e) { return true; }
+		}
+
 		// 请求超时：无超时时一次挂起会让 loading 永不复位、两个 store 永久停摆
 		var RPC_TIMEOUT_MS = 9000;
 		function rpc(prefix, method, args) {
@@ -207,11 +229,17 @@ window.__ModuleLoader__.load({
 			} catch (e) { /* 音频失败静默 */ }
 		}
 
-		function systemNotify(title, body, tag) {
+		function systemNotify(title, body, tag, sessionId) {
 			try {
 				if (typeof window === "undefined" || !("Notification" in window)) return;
 				if (Notification.permission !== "granted") return;
-				new Notification(title, { body: body, tag: tag });
+				var n = new Notification(title, { body: body, tag: tag });
+				// 点通知回到那个会话：否则"跑完了"只是通知你，还得自己找
+				n.onclick = function () {
+					try { window.focus(); } catch (e) { /* 无窗口焦点时忽略 */ }
+					if (sessionId) openSession(sessionId);
+					n.close();
+				};
 			} catch (e) { /* ignore */ }
 		}
 
@@ -363,9 +391,20 @@ window.__ModuleLoader__.load({
 			}, [open]);
 		}
 
+		// 最近一次快照时刻（列表条目算走秒用；由 Capsule/ToastStack 更新）
+		var lastSnapAt = 0;
+
 		// 任务列表条目（胶囊下拉与侧栏入口下拉共用）
 		function taskListNodes(active, recent, pick) {
-			var items = active.length > 0 ? active : recent;
+			// 待确认压在最前：胶囊写着"1 待确认"却要往下翻才找到，是这一步的失职
+			var items = active.length > 0
+				? active.slice().sort(function (a, b) {
+					var wa = Array.isArray(a.approvals) ? a.approvals.length : 0;
+					var wb = Array.isArray(b.approvals) ? b.approvals.length : 0;
+					if (wa !== wb) return wb - wa;
+					return (b.startTime || 0) - (a.startTime || 0);
+				})
+				: recent;
 			return items.slice(0, 8).map(function (t) {
 				var isAct = active.length > 0;
 				return h("button", {
@@ -377,7 +416,7 @@ window.__ModuleLoader__.load({
 				},
 					h("span", { className: "dot", style: { background: isAct ? phaseColor(t.phase) : (isSuccessEnd(t.endReason) ? "var(--pl-ok)" : "var(--pl-err)") } }),
 					h("span", { className: "t" }, t.title || "(无标题)"),
-					h("span", { className: "m" }, isAct ? phaseLabel(t.phase) + " " + fmtClock(t.elapsed) : endLabel(t.endReason) + " " + fmtDur(t.duration)));
+					h("span", { className: "m" }, isAct ? phaseLabel(t.phase) + " " + fmtClock((t.elapsed || 0) + Math.max(0, Date.now() - (lastSnapAt || Date.now()))) : endLabel(t.endReason) + " " + fmtDur(t.duration)));
 			});
 		}
 
@@ -393,6 +432,15 @@ window.__ModuleLoader__.load({
 			var active = st && st.active ? st.active : [];
 			var recent = st && st.recent ? st.recent : [];
 			var waiting = active.reduce(function (n, t) { return n + (Array.isArray(t.approvals) ? t.approvals.length : 0); }, 0);
+
+			// 耗时本地走秒：轮询 2s 一跳会让秒数一跳跳两格，看着像卡住
+			var tickState = react.useState(0);
+			var bumpTick = tickState[1];
+			react.useEffect(function () {
+				if (active.length === 0) return;
+				var timer = setInterval(function () { bumpTick(function (n) { return n + 1; }); }, 1000);
+				return function () { clearInterval(timer); };
+			}, [active.length]);
 
 			// 列表浮层打开时点外部关闭
 			react.useEffect(function () {
@@ -419,7 +467,8 @@ window.__ModuleLoader__.load({
 			} else if (active.length > 0) {
 				cls += " plp-run";
 				var newest = active.slice().sort(function (a, b) { return b.startTime - a.startTime; })[0];
-				var elapsed = active.reduce(function (m, t) { return Math.max(m, t.elapsed || 0); }, 0);
+				var drift = st && st.now ? (Date.now() - st.now) : 0;
+				var elapsed = active.reduce(function (m, t) { return Math.max(m, (t.elapsed || 0) + drift); }, 0);
 				txt = active.length + " 个任务 · " + fmtClock(elapsed);
 				dotColor = phaseColor(newest.phase);
 				title = (active.length === 1 ? "点击跳转对应会话" : "点击展开任务列表") + " · " + phaseLabel(newest.phase);
@@ -472,6 +521,7 @@ window.__ModuleLoader__.load({
 			var timersRef = react.useRef(new Map());
 
 			var st = store.snap;
+			if (st && st.now) lastSnapAt = st.now;
 			var cfg = (st && st.config) || {};
 
 			// 闸门：正盯着屏幕时发生的完成/出错不打扰（只记未读）；离开期间攒下的，回来结算成一张卡
@@ -560,18 +610,19 @@ window.__ModuleLoader__.load({
 							timersRef.current.set(item.id, timer);
 						}
 					}
-					// 每次刷新最多响一次：多任务同时结束不再叠成一团噪音
-					if (cfg.soundNotify !== false) {
+					// 每次刷新最多响一次，且只有 leader 窗口发声：多任务结不叠音、多窗口不重响
+					var leader = isLeader();
+					if (leader && cfg.soundNotify !== false) {
 						if (confirmCount > 0) playSound("ding", "ok");
 						else playSound(cfg.soundEffect, pending.length > 0 && !pending[0].ok ? "error" : "ok");
 					}
-					if (cfg.systemNotify && (cfg.systemNotifyAlways || !watching)) {
+					if (leader && cfg.systemNotify && (cfg.systemNotifyAlways || !watching)) {
 						var head = confirmCount > 0
 							? "✋ dsh 任务等待确认"
 							: (pending.length >= 2 ? "🔔 " + pending.length + " 个任务已结束"
 								: (pending.length === 1 ? (pending[0].ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(pending[0].endReason)) : ""));
 						var body = confirmCount > 0 ? (confirmCount + " 个工具在等确认") : (pending.length > 0 ? (pending[0].title || "") : "");
-						if (head) systemNotify(head, body, "dsh-task-capsule-batch");
+						if (head) systemNotify(head, body, "dsh-task-capsule-batch", pending.length > 0 ? pending[0].sessionId : "");
 					}
 				}
 			}, [st]);
@@ -617,6 +668,12 @@ window.__ModuleLoader__.load({
 		//#endregion
 
 		//#region 设置页
+		var PRESET_LIST = [
+			{ id: "quiet", label: "安静", desc: "只有工具在等你确认时才提醒；完成与出错只记未读。" },
+			{ id: "standard", label: "标准", desc: "离开窗口时提醒一次；正看着屏幕时不打扰。" },
+			{ id: "watch", label: "看护", desc: "全部提醒，系统通知常开，卡片常驻到手动关闭。" },
+		];
+
 		function SwitchRow(props) {
 			return h("div", { className: "pls-row" },
 				h("div", { className: "pls-label" },
@@ -678,7 +735,20 @@ window.__ModuleLoader__.load({
 				h("div", { className: "pls-intro" },
 					"任务胶囊（任务两件套）：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
 					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。两项功能常开、无独立开关；此处只配置通知行为。"),
-				h("div", { className: "pls-card" },
+				h("div", { className: "pls-preset" },
+					h("div", null, "提醒强度"),
+					h("div", { className: "pls-seg" }, PRESET_LIST.map(function (p) {
+						return h("button", {
+							type: "button",
+							key: p.id,
+							className: "pls-seg-btn" + (cfg.preset === p.id ? " on" : ""),
+							"aria-pressed": cfg.preset === p.id ? "true" : "false",
+							onClick: function () { patch({ preset: p.id }); },
+						}, p.label);
+					})),
+					h("div", { className: "pls-desc" }, (PRESET_LIST.filter(function (p) { return p.id === cfg.preset; })[0] || PRESET_LIST[1]).desc)),
+				h("details", { className: "pls-card" },
+					h("summary", { className: "pls-sum" }, "高级：单独调整每一项（会覆盖所选档位）"),
 					h(SwitchRow, {
 						label: "完成通知", desc: "任务正常结束时弹卡片",
 						on: cfg.notifyOnComplete !== false,

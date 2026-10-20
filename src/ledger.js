@@ -31,6 +31,19 @@ export function ledgerPaths() {
 }
 
 /** 记录主键：同一会话同一结束时刻即同一条。 */
+const TOKEN_KEYS = ['inputTokens', 'outputTokens', 'totalTokens', 'reasoningTokens', 'cacheReadTokens']
+
+/** 清掉历史记录里的 token 字段（v0.5 起不再采集），返回清掉的字段数。 */
+export function stripTokenFields(records) {
+  let n = 0
+  for (const r of records) {
+    for (const k of TOKEN_KEYS) {
+      if (k in r) { delete r[k]; n++ }
+    }
+  }
+  return n
+}
+
 export function makeRecordId(record) {
   return String(record.sessionId || '') + ':' + String(record.endTime || 0)
 }
@@ -117,6 +130,19 @@ export function createLedger({ log = console } = {}) {
 
     records.sort((a, b) => (b.endTime || 0) - (a.endTime || 0))
     seq = records.reduce((m, r) => Math.max(m, Number(r.seq) || 0), 0)
+
+    // 一次性清洗：删字段前写下的记录里还带着 token，重写到干净形态并留一份 .bak
+    const stripped = stripTokenFields(records)
+    if (stripped > 0) {
+      try { fs.copyFileSync(files.ledger, files.ledger + '.bak-tokens') } catch { /* 备份失败不阻断 */ }
+      try {
+        const body = records.slice().reverse().map((r) => JSON.stringify(r)).join('\n') + '\n'
+        atomicWrite(files.ledger, body)
+        log.warn('[dsh-task-capsule] stripped', stripped, 'token field(s) from existing ledger')
+      } catch (e) {
+        log.warn('[dsh-task-capsule] ledger sanitize rewrite failed:', (e && e.message) || String(e))
+      }
+    }
     if (meta.parseErrors > 0) log.warn('[dsh-task-capsule] ledger parse errors:', meta.parseErrors)
     return records
   }

@@ -5,25 +5,17 @@
 //   - notify    任务通知配置持久化 + 快照路由（页内卡片/提示音/系统通知在浏览器半部）
 // 两功能常开、无开关表；共享一份会话追踪实例（src/task-track.js）。
 // 不含 tokenlog：DSH 自带会话统计条已覆盖 token/缓存命中统计（用户 2026-09-17 裁决）。
-import { CAPSULE_NS, CapsuleConfig, migrateNotifyFromDock } from './src/host-core.js'
 import { createTracker } from './src/task-track.js'
 import { setupRunstate } from './features/runstate/host.js'
 import { setupNotify } from './features/notify/host.js'
 
 export const name = 'dsh-task-capsule'
 
-// 硬依赖 webServer（路由注册）+ settings（自有命名空间读写）。
-export const inject = ['webServer', 'settings']
+// 只硬依赖 webServer：配置早已落自有 JSON，settings 从 v0.5 起不再注册、不再注入
+export const inject = ['webServer']
 
 export function apply(ctx) {
   const disposers = []
-
-  // 自有 settings 命名空间（dsh-task-capsule）：通知行为配置持久化；
-  // 注册完成后从 dsh-dock 的 notify 段只读迁移一次旧值（不写回 dsh-dock）。
-  ctx.inject(['settings'], (sctx) => {
-    sctx.settings.register(CAPSULE_NS, CapsuleConfig, {})
-    migrateNotifyFromDock(sctx)
-  })
 
   // 会话级任务追踪：本插件内唯一实例，胶囊与通知共用；卸载时退订。
   const tracker = createTracker(ctx)

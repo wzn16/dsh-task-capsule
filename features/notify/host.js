@@ -8,7 +8,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { CAPSULE_NS, SOUND_EFFECTS, sendJson, readBody, assertTrustedRequest } from '../../src/host-core.js'
+import { CAPSULE_NS, PRESETS, PRESET_IDS, SOUND_EFFECTS, sendJson, readBody, assertTrustedRequest } from '../../src/host-core.js'
 
 // 默认配置（与 schema 默认值一致；settings.get 未挂载时的兜底）
 function defaultConfig() {
@@ -17,6 +17,7 @@ function defaultConfig() {
     notifyOnError: true,
     notifyOnConfirm: true,
     notifyStayMs: 8000,
+    preset: 'standard',
     systemNotify: false,
     systemNotifyAlways: false,
     soundNotify: true,
@@ -49,7 +50,7 @@ function saveOwnConfig(notify) {
 const CONFIG_TYPES = {
   notifyOnComplete: 'boolean', notifyOnError: 'boolean', notifyOnConfirm: 'boolean',
   systemNotify: 'boolean', systemNotifyAlways: 'boolean', soundNotify: 'boolean',
-  notifyStayMs: 'number', soundEffect: 'string', migratedFromDock: 'boolean',
+  notifyStayMs: 'number', soundEffect: 'string', preset: 'string', migratedFromDock: 'boolean',
 }
 
 // 只按声明类型取值：手改或撕裂的 JSON 不能把字符串当开关、不能把 setTimeout 撑成溢出值
@@ -62,7 +63,10 @@ function applyConfig(cfg, src) {
     if (want === 'boolean' && typeof v === 'boolean') cfg[key] = v
     else if (want === 'number' && typeof v === 'number' && Number.isFinite(v)) {
       cfg[key] = Math.max(0, Math.min(600000, Math.round(v)))
-    } else if (want === 'string' && SOUND_EFFECTS.includes(v)) cfg[key] = v
+    } else if (want === 'string') {
+      if (key === 'soundEffect' && SOUND_EFFECTS.includes(v)) cfg[key] = v
+      else if (key === 'preset' && PRESET_IDS.includes(v)) cfg[key] = v
+    }
   }
   return cfg
 }
@@ -73,9 +77,15 @@ function readConfig(ctx) {
   try {
     let n = loadOwnConfig()
     if (!n) {
+      // 阶段 A：自有文件缺失时读一次旧 settings 值，立刻写成本文件；之后只认本文件
       const settings = ctx.get('settings')
       const v = settings && typeof settings.get === 'function' ? settings.get(CAPSULE_NS) : null
       n = v && typeof v === 'object' && v.notify && typeof v.notify === 'object' ? v.notify : null
+      if (n) {
+        applyConfig(cfg, n)
+        try { saveOwnConfig(cfg) } catch { /* 写不进去就只读一次，不阻断 */ }
+        return cfg
+      }
     }
     applyConfig(cfg, n)
   } catch { /* 读取失败，用默认 */ }
@@ -133,6 +143,10 @@ export function setupNotify(ctx, tracker) {
             if (typeof p.systemNotifyAlways === 'boolean') cfg.systemNotifyAlways = p.systemNotifyAlways
             if (typeof p.soundNotify === 'boolean') cfg.soundNotify = p.soundNotify
             if (typeof p.soundEffect === 'string' && SOUND_EFFECTS.includes(p.soundEffect)) cfg.soundEffect = p.soundEffect
+            // 预设是既有字段的组合：切换即覆盖单项，UI 必须提示这一点
+            if (typeof p.preset === 'string' && PRESET_IDS.includes(p.preset)) {
+              Object.assign(cfg, PRESETS[p.preset], { preset: p.preset })
+            }
 
             try {
               saveOwnConfig(cfg)
