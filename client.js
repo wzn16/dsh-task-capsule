@@ -913,23 +913,24 @@ window.__ModuleLoader__.load({
 		}
 
 		function LedgerPanel() {
-			var state = react.useState({ loading: true, error: null, records: [], total: 0, summary: null });
+			var openState = react.useState(false);
+			var open = openState[0], setOpen = openState[1];
+			var state = react.useState({ loading: false, error: null, records: [], total: 0, summary: null, day: 0 });
 			var view = state[0], setView = state[1];
-			var openState = react.useState(null);
-			var openId = openState[0], setOpenId = openState[1];
+			var openIdState = react.useState(null);
+			var openId = openIdState[0], setOpenId = openIdState[1];
 			var copyState = react.useState("");
 			var copied = copyState[0], setCopied = copyState[1];
-			var dayState = react.useState(0);
-			var dayOff = dayState[0], setDayOff = dayState[1];
+			var todayState = react.useState(null);
+			var today = todayState[0], setToday = todayState[1];
 
-			function load(offset, day) {
-				day = day === undefined ? dayOff : day;
+			function fetchDay(day, offset) {
+				setView(function (v) { return Object.assign({}, v, { loading: true, error: null, day: day }); });
 				var day0 = dayStartAt(day);
-				setView(function (v) { return Object.assign({}, v, { loading: true, error: null }); });
 				rpc("dsh-task-capsule/ledger", "query", { since: day0, until: day0 + 86400000, limit: 10, offset: offset || 0 }).then(function (data) {
 					setView(function (v) {
 						return {
-							loading: false, error: null,
+							loading: false, error: null, day: day,
 							records: offset ? v.records.concat(data.records || []) : (data.records || []),
 							total: data.total || 0, summary: data.summary || null,
 						};
@@ -938,10 +939,20 @@ window.__ModuleLoader__.load({
 					setView(function (v) { return Object.assign({}, v, { loading: false, error: (e && e.message) || String(e) }); });
 				});
 			}
-			react.useEffect(function () { load(0); }, [dayOff]);
+
+			function fetchToday() {
+				// 收起时的摘要条也要有数：单独拉一次今天（服务端顺带返回 summary）
+				var day0 = todayStart();
+				rpc("dsh-task-capsule/ledger", "query", { since: day0, until: day0 + 86400000, limit: 1 }).then(function (data) {
+					setToday(data.summary || null);
+				}).catch(function (e) { /* 静默：摘要拉不到就显示占位 */ });
+			}
+
+			react.useEffect(function () { fetchToday(); }, []);
+			react.useEffect(function () { if (open && view.day === 0 && view.records.length === 0 && !view.loading) fetchDay(0, 0); }, [open]);
 
 			function exportDay(fmt) {
-				var day0 = dayStartAt(dayOff);
+				var day0 = dayStartAt(view.day);
 				rpc("dsh-task-capsule/ledger", "export", { since: day0, until: day0 + 86400000 }).then(function (data) {
 					var records = data.records || [];
 					if (records.length === 0) return;
@@ -984,51 +995,76 @@ window.__ModuleLoader__.load({
 				} catch (e) { console.error("[dsh-task-capsule] copy failed:", e && e.message); }
 			}
 
-			if (view.error) {
-				return h("div", { className: "pls-card" },
-					h("div", { className: "pls-label" }, h("div", null, "任务账本 · 今天")),
-					h("div", { className: "pls-desc" }, "读取失败：" + view.error),
-					h("button", { type: "button", className: "pls-btn", onClick: function () { load(0); } }, "重试"));
+			// 摘要条：收起时也在，今天有多少一目了然
+			var sum = today;
+			var chips = [];
+			if (sum && sum.count > 0) {
+				chips.push(sum.count + " 个");
+				if (sum.durationMs > 0) chips.push(fmtDur(sum.durationMs));
+				if (sum.approvalWaitMs > 0) chips.push("等确认 " + fmtDur(sum.approvalWaitMs));
+				if (sum.failures > 0) chips.push("✕ " + sum.failures);
+				if (sum.interrupted > 0) chips.push("↺ " + sum.interrupted);
 			}
 
-			return h("div", { className: "pls-card pls-ledger" },
-				h("div", { className: "pls-label", style: { display: "flex", alignItems: "center", gap: "6px" } },
-					h("div", null, "任务账本"),
-					h("button", { type: "button", className: "pls-btn", "aria-label": "往前一天", onClick: function () { setDayOff(dayOff + 1); } }, "‹"),
-					h("span", { className: "pls-desc", style: { margin: "0" } }, dayLabel(dayOff)),
-					h("button", {
-						type: "button", className: "pls-btn", "aria-label": "往后一天",
-						disabled: dayOff === 0,
-						onClick: function () { setDayOff(Math.max(0, dayOff - 1)); },
-					}, "›"),
-					h("span", { style: { flex: "1" } }),
-					h("button", { type: "button", className: "pls-btn", onClick: function () { exportDay("csv"); } }, "导出 CSV"),
-					h("button", { type: "button", className: "pls-btn", onClick: function () { exportDay("jsonl"); } }, "JSONL")),
-				h("div", { className: "pls-desc" }, summarizeLine(view.summary)),
-				view.records.map(function (r) {
-					var open = openId === r.recordId;
-					return h("div", { key: r.recordId, className: "pls-entry" },
+			var body = null;
+			if (!open) {
+				body = null;
+			} else if (view.error) {
+				body = h("div", { className: "pls-desc" },
+					"读取失败：" + view.error + " ",
+					h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, 0); } }, "重试"));
+			} else {
+				body = [
+					h("div", { className: "pls-daynav" },
+						h("button", { type: "button", className: "pls-btn", "aria-label": "往前一天", onClick: function () { fetchDay(view.day + 1, 0); } }, "‹"),
+						h("span", { className: "pls-chip" }, dayLabel(view.day)),
 						h("button", {
-							type: "button",
-							className: "pls-entry-head",
-							"aria-expanded": open ? "true" : "false",
-							onClick: function () { setOpenId(open ? null : r.recordId); },
-						},
-							h("span", { className: "dot", style: { background: isSuccessEnd(r.endReason) ? "var(--pl-ok)" : (r.recovered ? "var(--pl-warn)" : "var(--pl-err)") } }),
-							h("span", { className: "t" }, (r.title || "(无标题)") + (r.recovered ? "（中断恢复）" : "")),
-							h("span", { className: "m" }, fmtDur(r.duration))),
-						open ? h("div", { className: "pls-entry-body" },
-							h("div", null, "结束：" + endLabel(r.endReason) + (r.errorMessage ? " · " + truncate(r.errorMessage, 80) : "")),
-							h("div", null, (r.steps || 0) + " 步 · " + (r.toolCalls || 0) + " 次工具调用" + (r.approvalCount ? " · " + r.approvalCount + " 次审批，共等 " + fmtDur(r.approvalWaitMs) : "")),
-							r.models && r.models.length ? h("div", null, "模型：" + r.models.join("、")) : null,
-							h("div", null, "开始 " + new Date(r.startTime || 0).toLocaleString() + " → 结束 " + new Date(r.endTime || 0).toLocaleString()),
-							h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? "已复制" : "复制摘要")) : null);
-				}),
-				(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, (dayOff === 0 ? "今天" : dayLabel(dayOff)) + "还没有记录。") : null,
-				view.records.length < view.total
-					? h("button", { type: "button", className: "pls-btn", onClick: function () { load(view.records.length); } },
-						view.loading ? "正在读取…" : "加载更多（还有 " + (view.total - view.records.length) + " 条）")
-					: null);
+							type: "button", className: "pls-btn", "aria-label": "往后一天",
+							disabled: view.day === 0,
+							onClick: function () { fetchDay(Math.max(0, view.day - 1), 0); },
+						}, "›"),
+						h("span", { className: "pls-desc", style: { margin: "0", flex: "1" } }, summarizeLine(view.summary)),
+						h("button", { type: "button", className: "pls-btn", onClick: function () { exportDay("csv"); } }, "CSV"),
+						h("button", { type: "button", className: "pls-btn", onClick: function () { exportDay("jsonl"); } }, "JSONL")),
+					view.records.map(function (r) {
+						var isOpen = openId === r.recordId;
+						return h("div", { key: r.recordId, className: "pls-entry" },
+							h("button", {
+								type: "button",
+								className: "pls-entry-head",
+								"aria-expanded": isOpen ? "true" : "false",
+								onClick: function () { setOpenId(isOpen ? null : r.recordId); },
+							},
+								h("span", { className: "dot", style: { background: isSuccessEnd(r.endReason) ? "var(--pl-ok)" : (r.recovered ? "var(--pl-warn)" : "var(--pl-err)") } }),
+								h("span", { className: "t" }, (r.title || "(无标题)") + (r.recovered ? "（中断恢复）" : "")),
+								h("span", { className: "m" }, fmtDur(r.duration))),
+							isOpen ? h("div", { className: "pls-entry-body" },
+								h("div", null, "结束：" + endLabel(r.endReason) + (r.errorMessage ? " · " + truncate(r.errorMessage, 80) : "")),
+								h("div", null, (r.steps || 0) + " 步 · " + (r.toolCalls || 0) + " 次工具调用" + (r.approvalCount ? " · " + r.approvalCount + " 次审批，共等 " + fmtDur(r.approvalWaitMs) : "")),
+								r.models && r.models.length ? h("div", null, "模型：" + r.models.join("、")) : null,
+								h("div", null, "开始 " + new Date(r.startTime || 0).toLocaleString() + " → 结束 " + new Date(r.endTime || 0).toLocaleString()),
+								h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? "已复制" : "复制摘要")) : null);
+					}),
+					(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, (view.day === 0 ? "今天" : dayLabel(view.day)) + "还没有记录。") : null,
+					view.records.length < view.total
+						? h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, view.records.length); } },
+							view.loading ? "正在读取…" : "加载更多（还有 " + (view.total - view.records.length) + " 条）")
+						: null,
+				];
+			}
+
+			return h("div", { className: "pls-card" },
+				h("button", {
+					type: "button",
+					className: "pls-ledger-bar",
+					"aria-expanded": open ? "true" : "false",
+					onClick: function () { setOpen(!open); },
+				},
+					h("span", { className: "t" }, "任务账本"),
+					h("span", { className: "pls-chip" }, chips.length > 0 ? "今天 " + chips.join(" · ") : "今天还没有记录"),
+					h("span", { style: { flex: "1" } }),
+					h("span", { className: "pls-chip", "aria-hidden": "true" }, open ? "▾" : "▸")),
+				body);
 		}
 		//#endregion
 

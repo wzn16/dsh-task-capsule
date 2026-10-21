@@ -169,6 +169,10 @@ export function createTracker(ctx) {
       s.lastActivityAt = now
       return
     }
+    if (event.type === 'turn/end' && s.questions.size > 0) {
+      // 回合都结束了还挂着的提问必是残留——这条不依赖 reason 字段
+      s.questions.clear()
+    }
     if (event.type === 'turn/end' && event.data && event.data.reason) {
       const reason = event.data.reason
       // 只有明确的 kind 才采信：空 kind 曾被兜成 completed，等于把未知当成功
@@ -210,7 +214,8 @@ export function createTracker(ctx) {
       // 形如 {questions:[{header, question, options:[]}]}。解析失败只影响摘要，不影响等待态判定。
       const d = event.data || {}
       if (String(d.name || '').toLowerCase() === 'ask_user_question') {
-        const qid = (typeof d.callId === 'string' && d.callId) || (typeof d.id === 'string' && d.id) || ('q' + now)
+        if (!(typeof d.callId === 'string' && d.callId)) return // 没有 callId 就对不上 tool/result，不记
+        const qid = d.callId
         let info = { count: 0, header: '', text: '', optionCount: 0 }
         try {
           const parsed = typeof d.arguments === 'string' ? JSON.parse(d.arguments) : (d.arguments || null)
@@ -232,7 +237,11 @@ export function createTracker(ctx) {
         })
       }
     } else if (event.type === 'tool/result' && event.data) {
-      const rid = (typeof event.data.callId === 'string' && event.data.callId) || (typeof event.data.id === 'string' && event.data.id) || ''
+      // 载荷是嵌套的：data.message.source.callId（宿主 appendToolResult 里构造），顶层没有 id
+      const src = (event.data.message && event.data.message.source) || {}
+      const rid = (typeof src.callId === 'string' && src.callId)
+        || (typeof event.data.callId === 'string' && event.data.callId)
+        || ''
       if (rid) s.questions.delete(rid)
     } else if (event.type === 'user/message') {
       if (!s.firstPrompt && event.data && event.data.content) {
