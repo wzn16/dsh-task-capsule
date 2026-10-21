@@ -9,13 +9,19 @@ import { createTracker } from './src/task-track.js'
 import { setupRunstate } from './features/runstate/host.js'
 import { setupNotify } from './features/notify/host.js'
 import { setupLedger } from './features/ledger/host.js'
+import { SERVICES, checkServices } from './src/platform.js'
 
 export const name = 'dsh-task-capsule'
 
 // 只硬依赖 webServer：配置早已落自有 JSON，settings 从 v0.5 起不再注册、不再注入
-export const inject = ['webServer']
+export const inject = [SERVICES.webServer]
 
 export function apply(ctx) {
+  // 启动自检：缺服务就把话说清楚，而不是让功能静默失灵
+  const health = checkServices(ctx, Object.values(SERVICES))
+  if (!health.ok) {
+    console.error('[dsh-task-capsule] 宿主缺少服务:', health.missing.join(', '), '——请检查 DSH 版本兼容性（README「兼容性」节）')
+  }
   const disposers = []
 
   // 会话级任务追踪：本插件内唯一实例，胶囊与通知共用；卸载时退订。

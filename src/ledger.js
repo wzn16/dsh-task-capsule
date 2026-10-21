@@ -133,6 +133,8 @@ export function createLedger({ log = console } = {}) {
   let seq = 0
   let lastOpenWrite = 0
   let loaded = false
+  let readOnly = false // 账本里出现更新 schema 的记录时置位：只读降级，绝不改写或丢弃
+  let warnedReadOnly = false
 
   /** 启动时读盘：账本 + meta；整卷不可读时改名保留，不静默清空。 */
   function load() {
@@ -146,6 +148,7 @@ export function createLedger({ log = console } = {}) {
       meta.completedCount = Number(savedMeta.completedCount) || 0
       meta.parseErrors = Number(savedMeta.parseErrors) || 0
       meta.recovered = Number(savedMeta.recovered) || 0
+      meta.unsupported = Number(savedMeta.unsupported) || 0
     }
 
     try {
@@ -159,6 +162,19 @@ export function createLedger({ log = console } = {}) {
 
     records.sort((a, b) => (b.endTime || 0) - (a.endTime || 0))
     seq = records.reduce((m, r) => Math.max(m, Number(r.seq) || 0), 0)
+
+    // schema 越界防护：比本插件更新的记录 → 只读降级。
+    // 这类记录保留在内存与文件里，但本插件不再追加写、也不做清洗重写——防旧版本写坏新格式。
+    let unsupported = 0
+    for (const r of records) {
+      if ((Number(r.schemaVersion) || 1) > SCHEMA_VERSION) unsupported++
+    }
+    meta.unsupported = unsupported
+    if (unsupported > 0) {
+      readOnly = true
+      log.warn('[dsh-task-capsule] ledger 含', unsupported, '条更新 schema 的记录——进入只读降级，不再追加写')
+      return records
+    }
 
     // 一次性清洗：删字段前写下的记录里还带着 token，重写到干净形态并留一份 .bak
     const stripped = stripTokenFields(records)
@@ -230,13 +246,20 @@ export function createLedger({ log = console } = {}) {
       createdAt: now,
     }
     r.recordId = makeRecordId(r)
-    try {
-      ensureDir(files.dir)
-      rotateIfNeeded()
-      fs.appendFileSync(files.ledger, JSON.stringify(r) + '\n', { mode: 0o600 })
-    } catch (e) {
-      meta.writeErrors++
-      log.warn('[dsh-task-capsule] ledger append failed:', (e && e.message) || String(e))
+    if (readOnly) {
+      if (!warnedReadOnly) {
+        warnedReadOnly = true
+        log.warn('[dsh-task-capsule] 账本只读降级中：新记录仅保留在内存，不落盘')
+      }
+    } else {
+      try {
+        ensureDir(files.dir)
+        rotateIfNeeded()
+        fs.appendFileSync(files.ledger, JSON.stringify(r) + '\n', { mode: 0o600 })
+      } catch (e) {
+        meta.writeErrors++
+        log.warn('[dsh-task-capsule] ledger append failed:', (e && e.message) || String(e))
+      }
     }
     records.unshift(r)
     if (records.length > MAX_RECORDS) records.length = MAX_RECORDS
@@ -290,6 +313,8 @@ export function createLedger({ log = console } = {}) {
       parseErrors: meta.parseErrors,
       writeErrors: meta.writeErrors,
       recovered: meta.recovered,
+      readOnly,
+      unsupported: meta.unsupported,
       stored: records.length,
     }
   }

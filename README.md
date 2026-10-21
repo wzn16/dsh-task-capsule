@@ -8,6 +8,10 @@ DSH 的任务账本：把「跑过什么、跑了多久」记下来，并且只�
 - **提醒闸门**：正盯着屏幕时发生的完成不打扰（只记未读）；离开期间攒下的完成合并成一张卡，一次响一声
 - **账本面板**：按天查看汇总（任务数 / 总耗时 / 等你确认的时长 / 失败数）、逐条记录、展开详情、复制一段摘要；当天记录可导出 CSV / JSONL
 
+零运行时依赖，token 统计交给 DSH 自带会话统计条，不重复做。
+
+> **1.0 冻结**：功能到此为止，1.x 只修 bug、不新增功能。字段格式见 [docs/FIELDS.md](docs/FIELDS.md)，出问题按 [docs/ROLLBACK.md](docs/ROLLBACK.md) 取证与回滚。
+
 ![任务胶囊：会话 header 上显示任务数与耗时](docs/screenshots/capsule.png)
 
 ![任务下拉：点击胶囊展开，待确认的会话排在最前](docs/screenshots/dropdown.png)
@@ -129,7 +133,11 @@ curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
 - `features/runstate/` — 任务胶囊数据源（只读快照路由）
 - `features/notify/` — 通知配置持久化 + 快照路由（页内卡片/提示音/系统通知在浏览器半部）
 - `client.js` — Web 半部：胶囊渲染、通知卡、提示音、设置区
+- `src/platform.js` — 平台符号集中地（服务名 / 事件名 / 槽位名），启动自检缺服务会明确报错
 - `scripts/security-regression.sh` — 路由信任门回归（4 条断言）：`DSH_WEB_BASE=http://127.0.0.1:49539 bash scripts/security-regression.sh`
+- `scripts/smoke.mjs` — 模块可加载 + 导出完整 + 三处标识一致 + 平台符号一致
+- `scripts/unit.test.mjs` — 纯函数与降级路径（14 条）：`node --test scripts/unit.test.mjs`
+- `docs/FIELDS.md` — 账本字段字典（冻结基线）；`docs/ROLLBACK.md` — 回滚与取证手册
 
 ## License
 

@@ -9,6 +9,7 @@
 //   tracker.dispose()                        // 退订会话事件
 
 import { createLedger, summarizeRecords } from './ledger.js'
+import { EVENTS } from './platform.js'
 
 /** 内存里最近完成记录保留条数（新→旧）；持久层另有 1000 条上限。 */
 const MAX_COMPLETED = 30
@@ -282,14 +283,14 @@ export function createTracker(ctx) {
   // 不能在 setup 时软获取 sessionQuery（可能早于服务激活），用 inject 等就绪
   disposers.push(ctx.inject(['sessionQuery'], (sqCtx) => {
     const sessionQuery = sqCtx.sessionQuery
-    disposers.push(sqCtx.on('session/event', (session, event) => {
+    disposers.push(sqCtx.on(EVENTS.sessionEvent, (session, event) => {
       try {
         handleSessionEvent(sessionQuery, session, event)
       } catch (err) {
         console.error('[dsh-task-capsule] task-track handle event error', err)
       }
     }))
-    disposers.push(sqCtx.on('agent/status', (payload) => {
+    disposers.push(sqCtx.on(EVENTS.agentStatus, (payload) => {
       try {
         handleAgentStatus(sessionQuery, payload && payload.agent, payload && payload.status)
       } catch (err) {
@@ -297,7 +298,7 @@ export function createTracker(ctx) {
       }
     }))
     // agent 销毁兜底归档（会话直接关闭时也产出完成记录）
-    disposers.push(sqCtx.on('agent/disposed', (payload) => {
+    disposers.push(sqCtx.on(EVENTS.agentDisposed, (payload) => {
       try {
         const sid = payload && payload.agent && payload.agent.id ? String(payload.agent.id) : ''
         if (sid) {

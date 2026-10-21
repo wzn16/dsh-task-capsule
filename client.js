@@ -135,6 +135,16 @@ window.__ModuleLoader__.load({
 		}
 		//#endregion
 
+		// 平台符号集中地（与 src/platform.js 保持一致，smoke.mjs 会校验一致）
+		var PLATFORM = {
+			slots: {
+				capsule: "conversation.session.header.utilities",
+				overlay: "shell.overlay",
+				settings: "settings.section",
+			},
+			pane: ["main.conversation", "conversation.session"],
+		};
+
 		//#region helpers
 		// 多标签租约：只有一个窗口播声音/发系统通知，避免两个窗口各响一次
 		var LEASE_KEY = "dsh-task-capsule.leader";
@@ -385,7 +395,7 @@ window.__ModuleLoader__.load({
 				// 宿主对每个 slot 渲染 [data-slot="<slot名>"]；data-pane 在官方壳里已不存在，留作旧版回退
 				// 宿主 slot 名是点分路径（asar 里核实：main.conversation / conversation.session）；
 				// data-slot="conversation" 与 data-pane 都零命中，后者只作旧版回退
-				var PANE_SELECTORS = ['[data-slot="main.conversation"]', '[data-slot="conversation.session"]', '[data-pane="conversation"]'];
+				var PANE_SELECTORS = PLATFORM.pane.map(function (n) { return '[data-slot="' + n + '"]'; }).concat('[data-pane="conversation"]');
 				var tries = 0;
 				function find() {
 					var node = null;
@@ -1106,21 +1116,24 @@ window.__ModuleLoader__.load({
 			// runstate 全局轮询（胶囊/侧栏入口共享）；插件卸载时停止
 			ctx.effect(function () { return startRunPolling(); }, "dsh-task-capsule: runstate polling");
 			var slots = ctx.get("slots");
-			if (slots === undefined) return;
+			if (slots === undefined) {
+				console.error("[dsh-task-capsule] 宿主未提供 slots 服务（版本不兼容？）——胶囊与通知不可用，仅设置页保留");
+				return;
+			}
 
 			// 任务胶囊：in-flow 挂会话 header 右侧 utilities 行（chrome 行，不遮消息区）
-			slots.inject("conversation.session.header.utilities", function () { return slots.register(
-				{ name: "conversation.session.header.utilities", id: "dsh-task-capsule-capsule", order: 5, label: "dsh-task-capsule 任务胶囊" },
+			slots.inject(PLATFORM.slots.capsule, function () { return slots.register(
+				{ name: PLATFORM.slots.capsule, id: "dsh-task-capsule-capsule", order: 5, label: "dsh-task-capsule 任务胶囊" },
 				function () { return h(Capsule, null); }); });
 
 			// 通知卡栈：全局浮层
-			slots.inject("shell.overlay", function () { return slots.register(
-				{ name: "shell.overlay", id: "dsh-task-capsule-overlay", order: 31, label: "dsh-task-capsule 通知卡栈" },
+			slots.inject(PLATFORM.slots.overlay, function () { return slots.register(
+				{ name: PLATFORM.slots.overlay, id: "dsh-task-capsule-overlay", order: 31, label: "dsh-task-capsule 通知卡栈" },
 				function () { return h(ToastStack, null); }); });
 
 			// 设置页：通知行为配置
-			slots.inject("settings.section", function () { return slots.register(
-				{ name: "settings.section", id: "dsh-task-capsule", order: 91, label: "任务胶囊" },
+			slots.inject(PLATFORM.slots.settings, function () { return slots.register(
+				{ name: PLATFORM.slots.settings, id: "dsh-task-capsule", order: 91, label: "任务胶囊" },
 				function () { return h(CapsuleSettings, null); }); });
 		}
 

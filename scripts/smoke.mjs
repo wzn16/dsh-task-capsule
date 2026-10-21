@@ -42,5 +42,19 @@ for (const [label, got] of [['client.js id', clientId], ['cordis.patch.yml id', 
   else console.log('PASS 标识一致', label)
 }
 
+// 平台符号一致性：client.js 是独立 bundle，读不到 src/platform.js，靠这条断言防两边漂移
+{
+  const { CLIENT_SLOTS } = await import('file://' + path.join(root, 'src/platform.js'))
+  const pairs = [
+    ['capsule', CLIENT_SLOTS.capsule],
+    ['overlay', CLIENT_SLOTS.overlay],
+    ['settings', CLIENT_SLOTS.settings],
+  ]
+  for (const [label, symbol] of pairs) {
+    if (!clientText.includes(symbol)) { console.error('FAIL client.js 缺符号', label, '=', symbol); bad++ }
+    else console.log('PASS 符号一致', label)
+  }
+}
+
 if (bad) { console.error('\n冒烟失败：' + bad + ' 项'); process.exit(1) }
 console.log('\n冒烟通过')
