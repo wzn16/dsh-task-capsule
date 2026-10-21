@@ -81,6 +81,19 @@ window.__ModuleLoader__.load({
 			".pls-seg-btn+.pls-seg-btn{border-left:1px solid var(--dsw-alias-border-l1,#d7dae0);}",
 			".pls-seg-btn.on{background:color-mix(in srgb,var(--pl-accent) 12%,transparent);font-weight:600;}",
 			".pls-sum{cursor:pointer;font-size:12px;color:var(--dsw-alias-label-secondary,#666);padding:2px 0;}",
+			".pls-h{font-size:12px;font-weight:600;color:var(--dsw-alias-label-secondary,#666);letter-spacing:.02em;}",
+			".pls-card{display:flex;flex-direction:column;gap:2px;}",
+			".pls-ledger-card{gap:8px;}",
+			".pls-ledger-bar{display:flex;align-items:center;gap:8px;width:100%;border:none;background:transparent;padding:0;font-family:inherit;font-size:13px;color:inherit;cursor:pointer;text-align:left;}",
+			".plb-title{font-weight:600;}",
+			".plb-sub{font-size:12px;color:var(--dsw-alias-label-secondary,#666);}",
+			".plb-arrow{font-size:12px;color:var(--dsw-alias-label-secondary,#666);white-space:nowrap;}",
+			".plb-chips{display:flex;flex-wrap:wrap;gap:6px;}",
+			".plb-chip{font-size:11px;line-height:18px;padding:1px 9px;border-radius:99px;background:var(--dsw-alias-bg-base,#f4f5f7);color:var(--dsw-alias-label-secondary,#666);white-space:nowrap;}",
+			".plb-chip-acc{color:var(--pl-accent);background:color-mix(in srgb,var(--pl-accent) 10%,transparent);}",
+			".plb-chip-warn{color:var(--pl-warn);background:color-mix(in srgb,var(--pl-warn) 12%,transparent);}",
+			".plb-chip-bad{color:var(--pl-err);background:color-mix(in srgb,var(--pl-err) 10%,transparent);}",
+			".pls-daynav{display:flex;align-items:center;gap:6px;margin:2px 0 4px;}",
 			".pls-ledger{gap:4px;}",
 			".pls-entry{border-top:1px solid var(--dsw-alias-border-l1,#e6e8ec);padding-top:4px;}",
 			".pls-entry-head{display:flex;align-items:center;gap:8px;width:100%;border:none;background:transparent;padding:6px 0;font-family:inherit;font-size:13px;color:inherit;cursor:pointer;text-align:left;}",
@@ -546,6 +559,7 @@ window.__ModuleLoader__.load({
 				var visible = typeof document === "undefined" ? true : !document.hidden;
 				var focused = typeof document === "undefined" || typeof document.hasFocus !== "function" ? true : document.hasFocus();
 				var watching = visible && focused;
+				var leader = isLeader(); // 每次轮询都续租约，不只在要提醒时
 
 				// 首帧：已有记录与挂着的审批一律视为已知，刷新页面不补弹
 				if (!seenDone) {
@@ -579,6 +593,9 @@ window.__ModuleLoader__.load({
 						duration: r.duration || 0,
 					});
 				}
+
+				// 完成卡只弹主窗口（可选开关）：别的窗口看了也是重复噪音；未读照记
+				if (cfg.leaderOnlyCards === true && !leader) pending.length = 0;
 
 				var added = [];
 				// 多条积压合并成一张：闸门放开后不该被五个"完成"糊脸
@@ -646,7 +663,6 @@ window.__ModuleLoader__.load({
 						}
 					}
 					// 每次刷新最多响一次，且只有 leader 窗口发声：多任务结不叠音、多窗口不重响
-					var leader = isLeader();
 					if (leader && cfg.soundNotify !== false) {
 						if (confirmCount + askCount > 0) playSound("ding", "ok");
 						else playSound(cfg.soundEffect, pending.length > 0 && !pending[0].ok ? "error" : "ok");
@@ -769,10 +785,10 @@ window.__ModuleLoader__.load({
 			if (!cfg) return h("div", { className: "pls-root" }, h("div", { className: "pls-intro" }, "正在读取通知配置…"));
 			return h("div", { className: "pls-root" },
 				h("div", { className: "pls-intro" },
-					"任务胶囊（任务两件套）：会话 header 任务胶囊（圆点颜色分态、点击跳转会话）、任务通知（显式按钮跳转会话）。",
-					"Token 统计用 DSH 自带会话统计条即可，本插件不重复做。两项功能常开、无独立开关；此处只配置通知行为。"),
-				h("div", { className: "pls-preset" },
-					h("div", null, "提醒强度"),
+					"会话 header 任务胶囊、完成/出错/等待时的提醒卡、按天记账的任务账本。",
+					"提醒只在你不在窗口前时发出；token 统计交给 DSH 自带会话统计条。"),
+				h("div", { className: "pls-card" },
+					h("div", { className: "pls-h" }, "提醒强度"),
 					h("div", { className: "pls-seg" }, PRESET_LIST.map(function (p) {
 						return h("button", {
 							type: "button",
@@ -782,16 +798,16 @@ window.__ModuleLoader__.load({
 							onClick: function () { patch({ preset: p.id }); },
 						}, p.label);
 					})),
-					h("div", { className: "pls-desc" }, (PRESET_LIST.filter(function (p) { return p.id === cfg.preset; })[0] || PRESET_LIST[1]).desc)),
-				h("details", { className: "pls-card" },
-					h("summary", { className: "pls-sum" }, "高级：单独调整每一项（会覆盖所选档位）"),
+					h("div", { className: "pls-desc", style: { marginTop: "8px" } }, (PRESET_LIST.filter(function (p) { return p.id === cfg.preset; })[0] || PRESET_LIST[1]).desc)),
+				h("div", { className: "pls-card" },
+					h("div", { className: "pls-h" }, "提醒什么"),
 					h(SwitchRow, {
 						label: "完成通知", desc: "任务正常结束时弹卡片",
 						on: cfg.notifyOnComplete !== false,
 						onToggle: function () { patch({ notifyOnComplete: cfg.notifyOnComplete === false }); },
 					}),
 					h(SwitchRow, {
-						label: "异常通知", desc: "任务出错/中止/受阻时弹卡片",
+						label: "异常通知", desc: "任务出错 / 中止 / 受阻时弹卡片",
 						on: cfg.notifyOnError !== false,
 						onToggle: function () { patch({ notifyOnError: cfg.notifyOnError === false }); },
 					}),
@@ -804,12 +820,24 @@ window.__ModuleLoader__.load({
 						label: "选项提醒", desc: "DSH 弹选项选择（ask_user_question）等你拍板时提醒；不选它回合就一直停着",
 						on: cfg.notifyOnAsk !== false,
 						onToggle: function () { patch({ notifyOnAsk: cfg.notifyOnAsk === false }); },
-					}),
+					})),
+				h("div", { className: "pls-card" },
+					h("div", { className: "pls-h" }, "怎么提醒"),
 					h(SwitchRow, {
-						label: "提示音", desc: "WebAudio 合成，无音频文件",
+						label: "提示音", desc: "WebAudio 合成，无音频文件；等待确认与选项固定单音",
 						on: cfg.soundNotify !== false,
 						onToggle: function () { patch({ soundNotify: cfg.soundNotify === false }); },
 					}),
+					h("div", { className: "pls-row" },
+						h("div", { className: "pls-label" }, h("div", null, "完成提示音音效")),
+						h("select", {
+							className: "pls-sel",
+							"aria-label": "完成提示音音效",
+							value: cfg.soundEffect || "chime",
+							onChange: function (e) { patch({ soundEffect: e.target.value }); },
+						},
+							h("option", { value: "chime" }, "chime（双音）"),
+							h("option", { value: "ding" }, "ding（单音）"))),
 					h(SwitchRow, {
 						label: "浏览器系统通知", desc: "Electron 客户端内为系统级通知（macOS 通知中心 / Windows Toast）",
 						on: !!cfg.systemNotify,
@@ -828,6 +856,11 @@ window.__ModuleLoader__.load({
 						onToggle: function () { patch({ systemNotifyAlways: !cfg.systemNotifyAlways }); },
 					}) : null,
 					h(PermRow, { perm: perm, onTest: function () { sendTestNotify(cfg.systemNotify !== false); } }),
+					h(SwitchRow, {
+						label: "完成卡只弹主窗口", desc: "多窗口时，完成/出错的页内卡片只由主窗口弹出（待确认、待选择不受影响）",
+						on: cfg.leaderOnlyCards === true,
+						onToggle: function () { patch({ leaderOnlyCards: !(cfg.leaderOnlyCards === true) }); },
+					}),
 					h("div", { className: "pls-row" },
 						h("div", { className: "pls-label" }, h("div", null, "卡片停留时长")),
 						h("select", {
@@ -840,17 +873,7 @@ window.__ModuleLoader__.load({
 							h("option", { value: "8000" }, "8 秒"),
 							h("option", { value: "15000" }, "15 秒"),
 							h("option", { value: "30000" }, "30 秒"),
-							h("option", { value: "0" }, "常驻直到手动关闭"))),
-					h("div", { className: "pls-row" },
-						h("div", { className: "pls-label" }, h("div", null, "完成提示音音效")),
-						h("select", {
-							className: "pls-sel",
-							"aria-label": "完成提示音音效",
-							value: cfg.soundEffect || "chime",
-							onChange: function (e) { patch({ soundEffect: e.target.value }); },
-						},
-							h("option", { value: "chime" }, "chime（双音）"),
-							h("option", { value: "ding" }, "ding（单音）")))),
+							h("option", { value: "0" }, "常驻直到手动关闭")))),
 				h(LedgerPanel, null));
 		}
 		// 账本面板：今日汇总 + 最近记录 + 详情 + 复制摘要，挂在设置区里（不新开页面，守住一寸地）
@@ -945,7 +968,7 @@ window.__ModuleLoader__.load({
 				var day0 = todayStart();
 				rpc("dsh-task-capsule/ledger", "query", { since: day0, until: day0 + 86400000, limit: 1 }).then(function (data) {
 					setToday(data.summary || null);
-				}).catch(function (e) { /* 静默：摘要拉不到就显示占位 */ });
+				}).catch(function (e) { /* 摘要拉不到就显示占位 */ });
 			}
 
 			react.useEffect(function () { fetchToday(); }, []);
@@ -995,29 +1018,27 @@ window.__ModuleLoader__.load({
 				} catch (e) { console.error("[dsh-task-capsule] copy failed:", e && e.message); }
 			}
 
-			// 摘要条：收起时也在，今天有多少一目了然
+			// 摘要徽章：收起时也在，今天有多少一目了然
 			var sum = today;
 			var chips = [];
 			if (sum && sum.count > 0) {
-				chips.push(sum.count + " 个");
-				if (sum.durationMs > 0) chips.push(fmtDur(sum.durationMs));
-				if (sum.approvalWaitMs > 0) chips.push("等确认 " + fmtDur(sum.approvalWaitMs));
-				if (sum.failures > 0) chips.push("✕ " + sum.failures);
-				if (sum.interrupted > 0) chips.push("↺ " + sum.interrupted);
+				chips.push({ t: sum.count + " 个任务", c: "acc" });
+				if (sum.durationMs > 0) chips.push({ t: fmtDur(sum.durationMs), c: "" });
+				if (sum.approvalWaitMs > 0) chips.push({ t: "等确认 " + fmtDur(sum.approvalWaitMs), c: "warn" });
+				if (sum.failures > 0) chips.push({ t: "失败 " + sum.failures, c: "bad" });
+				if (sum.interrupted > 0) chips.push({ t: "中断 " + sum.interrupted, c: "" });
 			}
 
 			var body = null;
-			if (!open) {
-				body = null;
-			} else if (view.error) {
+			if (open && view.error) {
 				body = h("div", { className: "pls-desc" },
 					"读取失败：" + view.error + " ",
 					h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, 0); } }, "重试"));
-			} else {
+			} else if (open) {
 				body = [
 					h("div", { className: "pls-daynav" },
 						h("button", { type: "button", className: "pls-btn", "aria-label": "往前一天", onClick: function () { fetchDay(view.day + 1, 0); } }, "‹"),
-						h("span", { className: "pls-chip" }, dayLabel(view.day)),
+						h("span", { className: "plb-chip" }, dayLabel(view.day)),
 						h("button", {
 							type: "button", className: "pls-btn", "aria-label": "往后一天",
 							disabled: view.day === 0,
@@ -1053,17 +1074,25 @@ window.__ModuleLoader__.load({
 				];
 			}
 
-			return h("div", { className: "pls-card" },
+			return h("div", { className: "pls-card pls-ledger-card" },
 				h("button", {
 					type: "button",
 					className: "pls-ledger-bar",
 					"aria-expanded": open ? "true" : "false",
-					onClick: function () { setOpen(!open); },
+					onClick: function () {
+						var next = !open;
+						setOpen(next);
+						if (next && view.day === 0 && view.records.length === 0 && !view.loading) fetchDay(0, 0);
+					},
 				},
-					h("span", { className: "t" }, "任务账本"),
-					h("span", { className: "pls-chip" }, chips.length > 0 ? "今天 " + chips.join(" · ") : "今天还没有记录"),
+					h("span", { className: "plb-title" }, "任务账本"),
+					chips.length === 0 ? h("span", { className: "plb-sub" }, view.loading ? "读取中…" : "今天还没有记录") : null,
 					h("span", { style: { flex: "1" } }),
-					h("span", { className: "pls-chip", "aria-hidden": "true" }, open ? "▾" : "▸")),
+					h("span", { className: "plb-arrow", "aria-hidden": "true" }, open ? "▾ 收起" : "▸ 展开")),
+				chips.length > 0 ? h("div", { className: "plb-chips" },
+					chips.map(function (c2, i) {
+						return h("span", { key: i, className: "plb-chip" + (c2.c ? " plb-chip-" + c2.c : "") }, c2.t);
+					})) : null,
 				body);
 		}
 		//#endregion
