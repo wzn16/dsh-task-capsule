@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="100%" role="img" aria-label="dsh-task-capsule：DSH 的任务账本，记录每个会话跑过什么、跑了多久，只在你不在窗口前时提醒一次">
+  <title>dsh-task-capsule — DSH 的任务账本</title>
+  <rect x="1" y="1" width="1198" height="318" rx="22" fill="#F7F8FA" stroke="#E3E6EB" stroke-width="2"/>
+
+  <!-- 左侧：标题与定位 -->
+  <text x="56" y="104" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="44" font-weight="700" fill="#16181D" letter-spacing="-1">dsh-task-capsule</text>
+  <text x="56" y="146" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="21" fill="#4A5260">DSH 的任务账本</text>
+  <text x="56" y="198" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" fill="#6B7380">记录每个会话跑过什么、跑了多久；</text>
+  <text x="56" y="228" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="19" fill="#6B7380">只在你不在窗口前时提醒一次。</text>
+
+  <!-- 账本线：贯穿右侧的视觉母题 -->
+  <line x1="596" y1="252" x2="1148" y2="252" stroke="#D9DEE5" stroke-width="2"/>
+  <g stroke="#C3CAD3" stroke-width="2">
+    <line x1="640" y1="246" x2="640" y2="258"/>
+    <line x1="712" y1="246" x2="712" y2="258"/>
+    <line x1="784" y1="246" x2="784" y2="258"/>
+    <line x1="856" y1="246" x2="856" y2="258"/>
+    <line x1="928" y1="246" x2="928" y2="258"/>
+    <line x1="1000" y1="246" x2="1000" y2="258"/>
+    <line x1="1072" y1="246" x2="1072" y2="258"/>
+  </g>
+
+  <!-- 右侧上：胶囊 mock -->
+  <rect x="596" y="66" width="300" height="52" rx="26" fill="#FFFFFF" stroke="#D9DEE5" stroke-width="2"/>
+  <circle cx="626" cy="92" r="7" fill="#2F6FED"/>
+  <text x="648" y="100" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="20" fill="#16181D">2 个任务 · 01:14</text>
+
+  <!-- 右侧中：状态徽章 -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="18">
+    <rect x="596" y="140" width="128" height="38" rx="19" fill="#E8F0FE"/>
+    <text x="616" y="165" fill="#2F6FED">114 个任务</text>
+
+    <rect x="736" y="140" width="132" height="38" rx="19" fill="#F1F2F5"/>
+    <text x="756" y="165" fill="#5B6472">23小时53分</text>
+
+    <rect x="880" y="140" width="150" height="38" rx="19" fill="#FDECEC"/>
+    <text x="900" y="165" fill="#C8302B">失败 11</text>
+  </g>
+
+  <!-- 右侧下：落盘标注 -->
+  <text x="596" y="296" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#8A929E">~/.dsh/dsh-task-capsule/ledger.jsonl</text>
+</svg>

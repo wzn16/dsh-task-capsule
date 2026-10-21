@@ -1,53 +1,63 @@
-# dsh-task-capsule
+<img src="assets/readme/hero.svg" width="100%" alt="dsh-task-capsule：DSH 的任务账本，记录每个会话跑过什么、跑了多久，只在你不在窗口前时提醒一次">
 
-DSH 的任务账本：把「跑过什么、跑了多久」记下来，并且只在你不在窗口前时提醒一次。
+---
 
-- **任务胶囊**：会话 header 常驻运行任务胶囊，圆点颜色分态（运行中 / 等待确认 / 已结束 / 出错），耗时每秒走、待确认的会话排在最前，点击跳转对应会话
-- **任务通知卡**：任务完成 / 出错 / 等待用户确认时弹出页内通知卡，显式按钮跳转对应会话；支持提示音（WebAudio 合成，无音频文件）与系统通知（可选）
-- **账本与未读**：收尾记录落盘到 `~/.dsh/dsh-task-capsule/ledger.jsonl`，重启仍在；胶囊空闲态显示未读数，展开下拉即已读
-- **提醒闸门**：正盯着屏幕时发生的完成不打扰（只记未读）；离开期间攒下的完成合并成一张卡，一次响一声
-- **账本面板**：按天查看汇总（任务数 / 总耗时 / 等你确认的时长 / 失败数）、逐条记录、展开详情、复制一段摘要；当天记录可导出 CSV / JSONL
+## 它解决什么
 
-零运行时依赖，token 统计交给 DSH 自带会话统计条，不重复做。
+你同时开着几个会话跑长任务，切去写代码或者开会。回来第一个问题永远是：**刚才那个跑完没有？跑了多久？**
 
-> **1.0 冻结**：功能到此为止，1.x 只修 bug、不新增功能。字段格式见 [docs/FIELDS.md](docs/FIELDS.md)，出问题按 [docs/ROLLBACK.md](docs/ROLLBACK.md) 取证与回滚。
+DSH 原生会告诉你「这个会话现在是什么状态」，但不会留下记录，也不会在你离开时叫你。这个插件补的是这两件事——**一份可回读的账本**，加**一次打扰**。
 
-![任务胶囊：会话 header 上显示任务数与耗时](docs/screenshots/capsule.png)
+| 场景 | 之前 | 现在 |
+| --- | --- | --- |
+| 切走 20 分钟回来 | 不知道跑完没，可能白等或重复发起 | 胶囊显示「N 个任务 · 耗时」，点开看明细 |
+| 离开时任务结束 | 完全静默，回来零痕迹 | 回来看到一张聚合卡「离开期间 3 个任务结束」，一次提示音 |
+| 工具等你批准 / 选项等你拍板 | 会话就那么停着 | 页内卡 + 提示音 +（可选）系统通知 |
+| 想知道今天跑了什么 | 只能翻聊天记录 | 账本面板：按天汇总、逐条详情、导出 CSV/JSONL |
 
-![任务下拉：点击胶囊展开，待确认的会话排在最前](docs/screenshots/dropdown.png)
+## 长什么样
 
-![账本面板：今日汇总、逐条记录与详情](docs/screenshots/ledger.png)
+| 任务胶囊 | 任务下拉 |
+| --- | --- |
+| ![](docs/screenshots/capsule.png) | ![](docs/screenshots/dropdown.png) |
 
+![](docs/screenshots/ledger.png)
 
-## 兼容性
+<sub>账本面板：今日汇总（任务数 / 总耗时 / 等你确认 / 失败 / 中断）、逐条记录、展开详情、一键复制摘要。记录落盘，重启还在。</sub>
 
-- 已在 DSH Desktop 0.2.1-rc.2（macOS，desktop profile）实测可用。其他版本没验证过：宿主 API 有过漂移（settings 门面拒写、slot 名变更），升级 DSH 后请重跑下面的「装完确认」。
-- 浏览器端（`~/.dsh/profiles/web`）理论同构可用，但本仓库未在该 profile 实测。
-- 本机工具链为 Node 22.23.2 + pnpm 12.3.4，profile 侧依赖就是用这套 pnpm 装的。
+![](docs/screenshots/settings.png)
 
-装完确认（三条都要满足）：① 设置页出现「任务胶囊」分区；② 会话 header 右侧出现任务胶囊；③ 应用日志里出现 `[dsh-task-capsule] host half loaded; features: runstate, notify`（桌面端看应用日志，没有终端可看）。
+<sub>设置页：提醒强度 / 提醒什么 / 怎么提醒 三组开关 + 账本卡片。账本默认收起，收起态也带着今日摘要。</sub>
 
-## 版本与更新
+## 它跟「又一个提醒器」的区别
 
-- 当前版本以 `package.json` 的 `version` 为准，各版本改动见 GitHub Releases。
-- 更新：`cd 你的克隆目录 && git pull && pnpm install`（依赖没变可跳过 install）→ 完全退出并重启 DSH Desktop。`link:` 安装不会自动跟版本，必须手动拉。
+- **账本优先，提醒其次**：收尾记录先落盘（`ledger.jsonl`），再谈弹不弹。提醒链路受浏览器节流与焦点语义支配、修不好；记录链路不可靠只是"没写盘"。
+- **默认安静**：页面可见且有焦点、记录在 10 秒内结束时，只记未读，不弹卡不响铃。真正打断你的只有两件事——你不在窗口前，或者有东西在等你操作。
+- **失败与中断分开算**：宿主重启/崩溃补出来的记录标「中断恢复」，用户主动关掉会话标「已关闭」，都不进「没跑成」。否则重启几次，汇总就没意义了。
+- **审批和选项等待都记账**：`approvalWaitMs` 是原生不给的数据——今天有多少时间花在等批准上，账本说得清。
+
+## 怎么工作
+
+<img src="assets/readme/flow.svg" width="100%" alt="数据流：会话事件进入追踪器，写入账本文件，再由胶囊、通知卡与面板读取">
+
+宿主半部订阅会话事件，维护每个会话的阶段、审批、选项等待与结束原因；收尾时先写账本再广播。浏览器半部只读：两个接口过了本机回环 + 同源校验，所有展示都从同一份快照派生。
 
 ## 安装
 
 ```sh
-# 1. 克隆（零运行时依赖，不需要 install），顺手记住绝对路径
+# 1. 克隆（零运行时依赖，不需要 install），记住绝对路径
 git clone https://github.com/wzn16/dsh-task-capsule.git
 cd dsh-task-capsule && PLUGIN_DIR="$(pwd)" && echo "$PLUGIN_DIR"
-#   这一步要在同一个 shell 里跑完；中途换了窗口，就把 $PLUGIN_DIR 换成上面打印的绝对路径
+#   这一步要在同一个 shell 里跑完；换了窗口就把 $PLUGIN_DIR 换成上面打印的路径
 
-# 2. 看你自己的 profile 目录，别照抄路径
+# 2. 看你自己的 profile 目录，别照抄
 ls ~/.dsh/profiles/
 #   桌面端通常是 desktop，浏览器端（dsh web）是 web
 
 # 3. 链进 profile：把 desktop 换成第 2 步看到的目录名
 cd ~/.dsh/profiles/desktop
 pnpm add "link:$PLUGIN_DIR"
-#   等价写法：dsh plugin --profile desktop add "link:$PLUGIN_DIR"
+#   等价：dsh plugin --profile desktop add "link:$PLUGIN_DIR"
 
 # 4. 确认两处都有 dsh-task-capsule；缺 dsh.profile.bundles 就手动补一行
 grep -n '"dsh-task-capsule"' package.json
@@ -55,89 +65,81 @@ grep -n '"dsh-task-capsule"' package.json
 # 5. 完全退出并重启 DSH Desktop（刷新浏览器不够）
 ```
 
+**装完确认**（三条都要满足）：① 设置页出现「任务胶囊」分区；② 会话 header 右侧出现任务胶囊；③ 应用日志出现 `[dsh-task-capsule] host half loaded; features: runstate, notify`。
+
+**兼容性**：已在 DSH Desktop 0.2.1-rc.2（macOS，desktop profile）实测；浏览器 profile 理论同构但未实测。宿主 API 有过漂移（settings 门面拒写、slot 名变更），升级 DSH 后请重跑上面的确认三条。插件加载失败会在日志里明确报出缺哪个服务。
+
 ## 配置
 
-打开「系统通知」开关时会弹出系统授权弹窗（拒绝也不影响页内通知卡）。通知行为在插件设置区调整：
+设置页分四组：提醒强度（安静 / 标准 / 看护三档预设）、提醒什么、怎么提醒、任务账本。切档位会覆盖单项设置，单项也可以单独调。
 
 | 配置 | 默认 | 说明 |
 | --- | --- | --- |
-| 提醒强度 | 标准 | 三档预设：安静 / 标准 / 看护，切换会覆盖下面的单项（也可以展开「高级」单独调） |
+| 提醒强度 | 标准 | 安静：只提醒被卡住的；标准：离开窗口时提醒一次；看护：全提醒、系统通知常开、卡片常驻 |
 | 完成通知 | 开 | 任务正常结束弹卡；正看着屏幕时只记未读 |
 | 异常通知 | 开 | 任务出错 / 中止 / 受阻时弹卡 |
-| 需确认通知 | 开 | 工具等待批准时弹卡（approval/asked） |
-| 选项提醒 | 开 | DSH 弹选项选择（ask_user_question）等你拍板时提醒；不选它回合就一直停着 |
-| 卡片停留时长 | 8 秒 | 设置页给 5 / 8 / 15 / 30 秒与「常驻」五档；配置值本身是毫秒，0 = 常驻 |
-| 浏览器系统通知 | 关 | 系统级通知（DSH Desktop 客户端内为 macOS 通知中心 / Windows Toast；浏览器打开时为浏览器通知） |
-| 前台时也推系统通知 | 关 | 默认仅页面在后台时推送；开启后任务结束 / 等待确认时不分前后台都推 |
-| 提示音 | 开 | WebAudio 合成，无音频文件；等待确认提醒固定单音，完成音色见下一行 |
-| 完成提示音音效 | chime | 完成音色：chime（双音）/ ding（单音）；异常音固定为双低音 |
-
-## 系统通知说明
-
-- 设置区会显示当前系统通知授权状态（已授权 / 未请求 / 已被拒绝）；授权被拒时按提示前往 系统设置 → 通知 → DSH Desktop（Windows：设置 → 系统 → 通知）手动允许，改完如未生效重启 DSH。
-- 权限状态行与测试按钮常显，无需先打开「系统通知」开关：未授权时点「请求授权并测试」会弹出系统授权弹窗，允许后自动发送测试通知；已授权时点「发测试通知」直接验证链路。
-- tag 去重（同类通知合并）由 Electron 实现，只在 Windows / Linux 生效；macOS 上每条通知独立展示。
+| 需确认通知 | 开 | 工具等待批准时提醒 |
+| 选项提醒 | 开 | DSH 弹选项选择（`ask_user_question`）等你拍板时提醒 |
+| 提示音 | 开 | WebAudio 合成，无音频文件；等待确认与选项固定单音 |
+| 完成提示音音效 | chime | chime（双音）/ ding（单音） |
+| 浏览器系统通知 | 关 | Electron 内为系统级通知（macOS 通知中心 / Windows Toast） |
+| 前台时也推系统通知 | 关 | 默认仅后台推送；开启后不分前后台 |
+| 完成卡只弹主窗口 | 关 | 多窗口时完成/出错卡只由主窗口弹出（待确认、待选择不受影响） |
+| 卡片停留时长 | 8 秒 | 5 / 8 / 15 / 30 秒与「常驻」；配置值是毫秒，0 = 常驻 |
 
 ## 数据落盘
 
-账本目录 `~/.dsh/dsh-task-capsule/`（`DSH_HOME` 覆盖时跟着走）：
+账本目录 `~/.dsh/dsh-task-capsule/`（`DSH_HOME` 覆盖时跟着走），文件权限 `0600`：
 
 | 文件 | 内容 | 写入方式 |
 | --- | --- | --- |
-| `ledger.jsonl` | 已结束任务，一行一条，保留 1000 条或 2MB | 追加写 |
+| `ledger.jsonl` | 已结束任务，一行一条，1000 条 / 2MB 封顶后轮转 | 追加写 |
 | `ledger.1.jsonl` | 轮转后的上一代 | 轮转时改名 |
-| `open.json` | 运行中任务快照，5 秒节流 | 原子重写 |
+| `open.json` | 运行中任务快照（5 秒节流） | 原子重写 |
 | `meta.json` | 已读位与计数 | 原子重写 |
 
-崩溃或强杀后重启，`open.json` 里还挂着的任务会被补成一条「中断」记录，不会凭空消失。删掉整个目录即恢复初始状态。
+崩溃或强杀后重启，`open.json` 里挂着的任务会补成一条「中断」记录，结束时间取最后活动时刻，不伪造。删掉整个目录即回到初始状态。字段定义见 [docs/FIELDS.md](docs/FIELDS.md)。
 
-## 插件间只读查询（其他插件/脚本可复用）
-
-两个只读接口，均只接受本机回环 + 同源请求，只读、无副作用：
+## 插件间只读查询
 
 ```sh
-# 区间查询：返回当页记录与区间汇总
+# 区间查询：当页记录 + 区间汇总
 curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/query \
-  -H 'content-type: application/json' -d '{"since":1792425600000,"until":1792512000000,"limit":50,"offset":0}'
+  -H 'content-type: application/json' -d '{"since":0,"limit":50,"offset":0}'
 
-# 区间导出：一次返回区间内全部记录（上限为账本内存条数）
+# 区间导出
 curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
-  -H 'content-type: application/json' -d '{"since":1792425600000,"until":1792512000000}'
+  -H 'content-type: application/json' -d '{"since":0}'
 ```
 
-`records[]` 字段（schemaVersion 1）：`sessionId`、`title`、`firstPrompt`、`startedAt`、`endTime`、`duration`、`endReason`（completed / error / aborted / blocked / max-tokens / interrupted / disposed / unknown）、`errorMessage`、`steps`、`toolCalls`、`turns`、`models`、`provider`、`approvals[]`（含 `askedAt` / `decidedAt` / `waitMs`）、`approvalCount`、`approvalWaitMs`、`recovered`、`seq`、`recordId`。
-
-`summary`：`count`、`durationMs`、`steps`、`toolCalls`、`approvalWaitMs`、`failures`（仅真报错）、`interrupted`（含重启恢复与主动关闭）、`recovered`、`slowest`。
-
-约定：字段只增不改名；`schemaVersion` 变更时旧字段保留一个版本。
+只接受本机回环 + 同源请求，只读、无副作用。字段字典与兼容承诺见 [docs/FIELDS.md](docs/FIELDS.md)。
 
 ## 已知限制
 
-- **只在 DSH 页面打开时有效**：插件跑在渲染进程里，不是后台守护进程。窗口全关就没有提醒。
-- **后台可能迟到**：页面隐藏时浏览器会节流定时器，提醒最长可能延迟到分钟级；记录不会丢，但可能晚到。
-- **多窗口**：提示音与系统通知只由一个窗口发出（本地租约选主），但每个窗口的页内卡片仍各显示一份。
-- **系统通知被拒绝不影响页内卡片与提示音**：两条通道独立。
-- **只接受本机回环访问**：插件的两个接口只信任 `127.0.0.1` / `localhost` / `[::1]`，并同时校验 Host、Origin 与 Sec-Fetch-Site。用局域网 IP、手机或 tailscale 打开 Web GUI 时，胶囊与通知会失效。
-- **页面刷新会重弹未处理的确认提醒**：确认类提醒每次加载重新比对，处理掉的不会再弹；完成 / 出错类不补弹历史。
-- **下拉只显示最近 20 条**：账本本身保留 1000 条 / 2MB，但胶囊下拉只取最近 20 条（更早的还在文件里）。
-- **通知卡同时最多 5 张**：并发任务多时最早的会被挤出去，可能漏看。
-- **配置不在 DSH 设置里**：通知配置落盘在 `~/.dsh/dsh-task-capsule.notify.json`，删掉该文件或更换 `DSH_HOME` 就回默认值。
+- **只在 DSH 页面打开时有效**：插件跑在渲染进程里，不是后台守护进程。
+- **后台可能迟到**：页面隐藏时浏览器节流定时器，提醒最长延迟到分钟级；记录不丢。
+- **多窗口**：提示音与系统通知只由一个窗口发出（本地租约选主），页内卡片默认各窗口各一份，可开「完成卡只弹主窗口」。
+- **只接受本机回环访问**：用局域网 IP、手机或 tailscale 打开 Web GUI 时，胶囊与通知失效。
+- **下拉只显示最近 20 条**：账本保留 1000 条 / 2MB，更早的在面板里翻或直接导文件。
+- **配置不在 DSH 设置里**：落盘在 `~/.dsh/dsh-task-capsule.notify.json`，删掉即回默认。
 
-## 结构
+## 版本与更新
 
-- `index.js` — Host 半部入口：会话追踪实例、路由装配（v0.5 起不再注册 settings 命名空间）
-- `src/host-core.js` — 常量、settings schema、HTTP 小工具
-- `src/task-track.js` — 会话级任务追踪：阶段推导、等待确认（approvals）、会话标题与结束归档
-- `src/ledger.js` — 账本：收尾记录追加写、open 快照、崩溃恢复、未读位
-- `features/ledger/` — 账本查询路由（区间查询 + 汇总，只读）
-- `features/runstate/` — 任务胶囊数据源（只读快照路由）
-- `features/notify/` — 通知配置持久化 + 快照路由（页内卡片/提示音/系统通知在浏览器半部）
-- `client.js` — Web 半部：胶囊渲染、通知卡、提示音、设置区
-- `src/platform.js` — 平台符号集中地（服务名 / 事件名 / 槽位名），启动自检缺服务会明确报错
-- `scripts/security-regression.sh` — 路由信任门回归（4 条断言）：`DSH_WEB_BASE=http://127.0.0.1:49539 bash scripts/security-regression.sh`
-- `scripts/smoke.mjs` — 模块可加载 + 导出完整 + 三处标识一致 + 平台符号一致
-- `scripts/unit.test.mjs` — 纯函数与降级路径（14 条）：`node --test scripts/unit.test.mjs`
-- `docs/FIELDS.md` — 账本字段字典（冻结基线）；`docs/ROLLBACK.md` — 回滚与取证手册
+- 版本以 `package.json` 为准，改动见 [Releases](https://github.com/wzn16/dsh-task-capsule/releases)。
+- 更新：`cd 你的克隆目录 && git pull` → 完全退出并重启 DSH Desktop。`link:` 安装不会自动跟版本。
+- 出问题按 [docs/ROLLBACK.md](docs/ROLLBACK.md) 取证与回滚。
+
+> **1.0 冻结**：功能到此为止，1.x 只修 bug、不新增功能。
+
+## 开发
+
+```sh
+node scripts/smoke.mjs                                                     # 模块装配 + 标识/平台符号一致
+node --test scripts/unit.test.mjs                                          # 14 条纯函数与降级路径
+DSH_WEB_BASE=http://127.0.0.1:<port> bash scripts/security-regression.sh   # 路由信任门 4 条断言
+```
+
+结构：`index.js`（Host 入口）、`src/task-track.js`（追踪器）、`src/ledger.js`（账本）、`src/platform.js`（平台符号）、`features/*`（只读路由）、`client.js`（浏览器半部，手写 bundle 无构建链）。
 
 ## License
 

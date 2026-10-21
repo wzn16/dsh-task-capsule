@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="100%" role="img" aria-label="数据流：DSH 会话事件经追踪器写入账本文件，账本再喂给任务胶囊、通知卡与账本面板">
+  <title>dsh-task-capsule 数据流</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B6BEC9"/>
+    </marker>
+  </defs>
+
+  <!-- 节点 1 -->
+  <rect x="24" y="96" width="228" height="108" rx="14" fill="#FFFFFF" stroke="#E3E6EB" stroke-width="2"/>
+  <text x="48" y="136" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="20" font-weight="600" fill="#16181D">DSH 会话事件</text>
+  <text x="48" y="168" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7A828E">session/event</text>
+  <text x="48" y="190" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#7A828E">agent/status</text>
+
+  <line x1="260" y1="150" x2="316" y2="150" stroke="#B6BEC9" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 节点 2 -->
+  <rect x="324" y="96" width="248" height="108" rx="14" fill="#FFFFFF" stroke="#E3E6EB" stroke-width="2"/>
+  <text x="348" y="136" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="20" font-weight="600" fill="#16181D">追踪器</text>
+  <text x="348" y="164" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="17" fill="#7A828E">阶段 · 审批 · 选项等待</text>
+  <text x="348" y="188" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="17" fill="#7A828E">结束原因 · 耗时</text>
+
+  <line x1="580" y1="150" x2="636" y2="150" stroke="#B6BEC9" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 节点 3 -->
+  <rect x="644" y="96" width="248" height="108" rx="14" fill="#F3F7FF" stroke="#CBDBFB" stroke-width="2"/>
+  <text x="668" y="136" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="20" font-weight="600" fill="#1F4FB0">账本（落盘）</text>
+  <text x="668" y="164" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#4A6FA5">ledger.jsonl</text>
+  <text x="668" y="186" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#4A6FA5">open.json · meta.json</text>
+
+  <line x1="900" y1="150" x2="956" y2="150" stroke="#B6BEC9" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 节点 4：三个出口 -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="18">
+    <rect x="964" y="54" width="212" height="52" rx="12" fill="#FFFFFF" stroke="#E3E6EB" stroke-width="2"/>
+    <text x="986" y="87" fill="#16181D">任务胶囊</text>
+
+    <rect x="964" y="124" width="212" height="52" rx="12" fill="#FFFFFF" stroke="#E3E6EB" stroke-width="2"/>
+    <text x="986" y="157" fill="#16181D">通知卡 + 提示音</text>
+
+    <rect x="964" y="194" width="212" height="52" rx="12" fill="#FFFFFF" stroke="#E3E6EB" stroke-width="2"/>
+    <text x="986" y="227" fill="#16181D">账本面板 / 导出</text>
+  </g>
+
+  <!-- 底部说明 -->
+  <text x="24" y="266" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="17" fill="#8A929E">单写者：只有 host 进程写账本；浏览器半部只读，两个只读接口走本机回环校验。</text>
+</svg>
