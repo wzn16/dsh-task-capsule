@@ -6,7 +6,7 @@ DSH 的任务账本：把「跑过什么、跑了多久」记下来，并且只�
 - **任务通知卡**：任务完成 / 出错 / 等待用户确认时弹出页内通知卡，显式按钮跳转对应会话；支持提示音（WebAudio 合成，无音频文件）与系统通知（可选）
 - **账本与未读**：收尾记录落盘到 `~/.dsh/dsh-task-capsule/ledger.jsonl`，重启仍在；胶囊空闲态显示未读数，展开下拉即已读
 - **提醒闸门**：正盯着屏幕时发生的完成不打扰（只记未读）；离开期间攒下的完成合并成一张卡，一次响一声
-- **账本面板**：设置区里看今天的汇总（任务数 / 总耗时 / 等你确认的时长 / 失败数）、逐条记录、展开详情、复制一段摘要
+- **账本面板**：按天查看汇总（任务数 / 总耗时 / 等你确认的时长 / 失败数）、逐条记录、展开详情、复制一段摘要；当天记录可导出 CSV / JSONL
 
 ![任务胶囊：会话 header 上显示任务数与耗时](docs/screenshots/capsule.png)
 
@@ -14,7 +14,6 @@ DSH 的任务账本：把「跑过什么、跑了多久」记下来，并且只�
 
 ![账本面板：今日汇总、逐条记录与详情](docs/screenshots/ledger.png)
 
-从 dsh-dock 最常用的功能提取精简而成；零运行时依赖，token 统计交给 DSH 自带会话统计条，不重复做。
 
 ## 兼容性
 
@@ -62,6 +61,7 @@ grep -n '"dsh-task-capsule"' package.json
 | 完成通知 | 开 | 任务正常结束弹卡；正看着屏幕时只记未读 |
 | 异常通知 | 开 | 任务出错 / 中止 / 受阻时弹卡 |
 | 需确认通知 | 开 | 工具等待批准时弹卡（approval/asked） |
+| 选项提醒 | 开 | DSH 弹选项选择（ask_user_question）等你拍板时提醒；不选它回合就一直停着 |
 | 卡片停留时长 | 8 秒 | 设置页给 5 / 8 / 15 / 30 秒与「常驻」五档；配置值本身是毫秒，0 = 常驻 |
 | 浏览器系统通知 | 关 | 系统级通知（DSH Desktop 客户端内为 macOS 通知中心 / Windows Toast；浏览器打开时为浏览器通知） |
 | 前台时也推系统通知 | 关 | 默认仅页面在后台时推送；开启后任务结束 / 等待确认时不分前后台都推 |
@@ -86,6 +86,26 @@ grep -n '"dsh-task-capsule"' package.json
 | `meta.json` | 已读位与计数 | 原子重写 |
 
 崩溃或强杀后重启，`open.json` 里还挂着的任务会被补成一条「中断」记录，不会凭空消失。删掉整个目录即恢复初始状态。
+
+## 插件间只读查询（其他插件/脚本可复用）
+
+两个只读接口，均只接受本机回环 + 同源请求，只读、无副作用：
+
+```sh
+# 区间查询：返回当页记录与区间汇总
+curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/query \
+  -H 'content-type: application/json' -d '{"since":1792425600000,"until":1792512000000,"limit":50,"offset":0}'
+
+# 区间导出：一次返回区间内全部记录（上限为账本内存条数）
+curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
+  -H 'content-type: application/json' -d '{"since":1792425600000,"until":1792512000000}'
+```
+
+`records[]` 字段（schemaVersion 1）：`sessionId`、`title`、`firstPrompt`、`startedAt`、`endTime`、`duration`、`endReason`（completed / error / aborted / blocked / max-tokens / interrupted / disposed / unknown）、`errorMessage`、`steps`、`toolCalls`、`turns`、`models`、`provider`、`approvals[]`（含 `askedAt` / `decidedAt` / `waitMs`）、`approvalCount`、`approvalWaitMs`、`recovered`、`seq`、`recordId`。
+
+`summary`：`count`、`durationMs`、`steps`、`toolCalls`、`approvalWaitMs`、`failures`（仅真报错）、`interrupted`（含重启恢复与主动关闭）、`recovered`、`slowest`。
+
+约定：字段只增不改名；`schemaVersion` 变更时旧字段保留一个版本。
 
 ## 已知限制
 

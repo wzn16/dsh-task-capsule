@@ -16,6 +16,7 @@ function defaultConfig() {
     notifyOnComplete: true,
     notifyOnError: true,
     notifyOnConfirm: true,
+    notifyOnAsk: true,
     notifyStayMs: 8000,
     preset: 'standard',
     systemNotify: false,
@@ -48,7 +49,7 @@ function saveOwnConfig(notify) {
 }
 
 const CONFIG_TYPES = {
-  notifyOnComplete: 'boolean', notifyOnError: 'boolean', notifyOnConfirm: 'boolean',
+  notifyOnComplete: 'boolean', notifyOnError: 'boolean', notifyOnConfirm: 'boolean', notifyOnAsk: 'boolean',
   systemNotify: 'boolean', systemNotifyAlways: 'boolean', soundNotify: 'boolean',
   notifyStayMs: 'number', soundEffect: 'string', preset: 'string', migratedFromDock: 'boolean',
 }
@@ -136,6 +137,7 @@ export function setupNotify(ctx, tracker) {
             if (typeof p.notifyOnComplete === 'boolean') cfg.notifyOnComplete = p.notifyOnComplete
             if (typeof p.notifyOnError === 'boolean') cfg.notifyOnError = p.notifyOnError
             if (typeof p.notifyOnConfirm === 'boolean') cfg.notifyOnConfirm = p.notifyOnConfirm
+            if (typeof p.notifyOnAsk === 'boolean') cfg.notifyOnAsk = p.notifyOnAsk
             if (typeof p.notifyStayMs === 'number' && Number.isFinite(p.notifyStayMs)) {
               cfg.notifyStayMs = Math.max(0, Math.min(600000, Math.round(p.notifyStayMs)))
             }

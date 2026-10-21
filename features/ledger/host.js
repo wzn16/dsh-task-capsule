@@ -18,6 +18,10 @@ export function setupLedger(ctx, tracker) {
             return sendJson(res, 200, { ok: true, data: tracker.ledgerQuery(payload) })
           }
 
+          if (method === 'export') {
+            return sendJson(res, 200, { ok: true, data: tracker.ledgerExport(payload) })
+          }
+
           return sendJson(res, 404, { ok: false, error: { code: 'method-not-found', message: 'unknown method: ' + method } })
         } catch (e) {
           const status = e && e.statusCode ? e.statusCode : 500

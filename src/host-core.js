@@ -5,17 +5,17 @@
 export const PRESETS = {
   // 只有工具在等你确认时才吵；完成/出错只记未读
   quiet: {
-    notifyOnComplete: false, notifyOnError: false, notifyOnConfirm: true,
+    notifyOnComplete: false, notifyOnError: false, notifyOnConfirm: true, notifyOnAsk: true,
     soundNotify: false, systemNotify: false, systemNotifyAlways: false, notifyStayMs: 5000,
   },
   // 离开窗口时提醒一次；正看着屏幕时不打扰
   standard: {
-    notifyOnComplete: true, notifyOnError: true, notifyOnConfirm: true,
+    notifyOnComplete: true, notifyOnError: true, notifyOnConfirm: true, notifyOnAsk: true,
     soundNotify: true, systemNotify: true, systemNotifyAlways: false, notifyStayMs: 8000,
   },
   // 全都要：系统通知常开，卡片常驻到手动关闭
   watch: {
-    notifyOnComplete: true, notifyOnError: true, notifyOnConfirm: true,
+    notifyOnComplete: true, notifyOnError: true, notifyOnConfirm: true, notifyOnAsk: true,
     soundNotify: true, systemNotify: true, systemNotifyAlways: true, notifyStayMs: 0,
   },
 }

@@ -86,6 +86,7 @@ export function createTracker(ctx) {
       firstPrompt: '',
       // 工具等待用户确认（dsh 会话流 approval/asked）：浏览器侧据此弹"需确认"通知
       approvals: new Map(), // approvalId -> { toolName, reason, askedAt }
+      questions: new Map(), // ask_user_question 等待用户选择：qid -> { title, question, askedAt }
       approvalLog: [], // 已决审批：{ id, toolName, askedAt, decidedAt, waitMs }
       phase: 'think',
       phaseAt: Date.now(),
@@ -176,6 +177,8 @@ export function createTracker(ctx) {
         const msg = (reason.error && (reason.error.message || reason.error.code)) || ''
         s.errorMessage = typeof msg === 'string' ? msg : String(msg)
       }
+      // 回合都结束了还挂着的提问必是残留
+      if (s.questions.size > 0) s.questions.clear()
     } else if (event.type === 'approval/asked' && event.data) {
       // 工具等待用户确认/批准：挂在会话记录上，/status 下发给浏览器弹"需确认"通知
       const id = typeof event.data.id === 'string' ? event.data.id : ''
@@ -202,6 +205,35 @@ export function createTracker(ctx) {
       s.toolCalls++
       s.phase = phaseOfToolName(event.data && event.data.name)
       s.phaseAt = now
+      // 选项选择会停住整个回合等你拍板：与审批一样属于"有东西等你"，只是入口不同。
+      // 载荷事实（issue #1 贡献者实测）：id 字段叫 callId；arguments 是 JSON 字符串，
+      // 形如 {questions:[{header, question, options:[]}]}。解析失败只影响摘要，不影响等待态判定。
+      const d = event.data || {}
+      if (String(d.name || '').toLowerCase() === 'ask_user_question') {
+        const qid = (typeof d.callId === 'string' && d.callId) || (typeof d.id === 'string' && d.id) || ('q' + now)
+        let info = { count: 0, header: '', text: '', optionCount: 0 }
+        try {
+          const parsed = typeof d.arguments === 'string' ? JSON.parse(d.arguments) : (d.arguments || null)
+          const list = parsed && Array.isArray(parsed.questions) ? parsed.questions : []
+          const first = list.length > 0 ? list[0] : null
+          info = {
+            count: list.length,
+            header: first && typeof first.header === 'string' ? truncate(first.header, 60) : '',
+            text: first && typeof first.question === 'string' ? truncate(first.question, 200) : '',
+            optionCount: first && Array.isArray(first.options) ? first.options.length : 0,
+          }
+        } catch { /* arguments 不是合法 JSON：仍然记等待，只是摘要为空 */ }
+        s.questions.set(qid, {
+          askedAt: now,
+          count: info.count,
+          header: info.header,
+          text: info.text,
+          optionCount: info.optionCount,
+        })
+      }
+    } else if (event.type === 'tool/result' && event.data) {
+      const rid = (typeof event.data.callId === 'string' && event.data.callId) || (typeof event.data.id === 'string' && event.data.id) || ''
+      if (rid) s.questions.delete(rid)
     } else if (event.type === 'user/message') {
       if (!s.firstPrompt && event.data && event.data.content) {
         const text = extractText(event.data.content)
@@ -291,6 +323,7 @@ export function createTracker(ctx) {
           phaseAt: s.phaseAt,
           lastActivityAt: s.lastActivityAt,
           approvals: [...s.approvals.entries()].map(([id, v]) => ({ id, ...v })),
+          questions: [...s.questions.entries()].map(([id, v]) => ({ id, ...v })),
         })
       }
       // 最近完成以落盘账本为准（重启后仍在），内存数组只做加速
@@ -320,6 +353,14 @@ export function createTracker(ctx) {
         records: all.slice(offset, offset + limit),
         summary: summarizeRecords(all),
       }
+    },
+    /** 区间导出：一次拉全量（内存上限 1000 条），CSV/JSONL 由浏览器侧拼装。 */
+    ledgerExport(opts) {
+      const o = opts || {}
+      const since = Number(o.since) || 0
+      const until = Number(o.until) || (Date.now() + 1)
+      const records = ledger.records().filter((r) => (r.endTime || 0) >= since && (r.endTime || 0) < until)
+      return { since, until, count: records.length, records }
     },
     /** 标记已读（浏览器展开下拉时调用）。 */
     markRead(at) {

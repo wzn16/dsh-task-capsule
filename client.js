@@ -57,6 +57,7 @@ window.__ModuleLoader__.load({
 			".pln-toast{pointer-events:auto;position:relative;border:1px solid var(--dsw-alias-border-l1,#ddd);border-left:3px solid var(--pl-ok);background:var(--dsw-alias-bg-layer-1,#fff);color:var(--dsw-alias-label-primary,#111);border-radius:12px;box-shadow:0 10px 32px rgb(0 0 0 / .16);padding:10px 30px 10px 12px;cursor:pointer;animation:pl-in .18s ease-out;}",
 			".pln-toast.err{border-left-color:var(--pl-err);}",
 			".pln-toast.warn{border-left-color:var(--pl-warn);}",
+			".pln-toast.ask{border-left-color:var(--pl-accent);}",
 			"@keyframes pl-in{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:none;}}",
 			".pln-title{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
 			".pln-meta{margin-top:3px;font-size:12px;color:var(--dsw-alias-label-secondary,#666);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
@@ -87,6 +88,7 @@ window.__ModuleLoader__.load({
 			".pls-entry-head .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
 			".pls-entry-head .m{flex:none;font-size:12px;color:var(--dsw-alias-label-secondary,#666);}",
 			".pls-entry-body{display:flex;flex-direction:column;gap:3px;padding:0 0 8px 15px;font-size:12px;color:var(--dsw-alias-label-secondary,#666);}",
+			".pls-btn[disabled]{opacity:.4;cursor:default;}",
 			".pls-sw{flex:none;position:relative;width:34px;height:19px;border-radius:999px;border:1px solid var(--dsw-alias-border-l2,#ccc);background:var(--dsw-alias-bg-layer-2,#f4f4f4);cursor:pointer;padding:0;transition:background .18s,border-color .18s;}",
 			".pls-sw::after{content:\"\";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0 / .35);transition:transform .18s;}",
 			".pls-sw.on{background:var(--pl-ok);border-color:transparent;}",
@@ -312,6 +314,7 @@ window.__ModuleLoader__.load({
 		// 表现为同一批完成补弹一次或漏弹一次
 		var seenDone = null;
 		var seenApr = new Set();
+		var seenAsk = new Set();
 
 		function markAllRead(store) {
 			rpc("dsh-task-capsule/notify", "read", {}).then(function () { return store.refresh(); }).catch(function (e) {
@@ -406,8 +409,8 @@ window.__ModuleLoader__.load({
 			// 待确认压在最前：胶囊写着"1 待确认"却要往下翻才找到，是这一步的失职
 			var items = active.length > 0
 				? active.slice().sort(function (a, b) {
-					var wa = Array.isArray(a.approvals) ? a.approvals.length : 0;
-					var wb = Array.isArray(b.approvals) ? b.approvals.length : 0;
+					var wa = (Array.isArray(a.approvals) ? a.approvals.length : 0) + (Array.isArray(a.questions) ? a.questions.length : 0);
+					var wb = (Array.isArray(b.approvals) ? b.approvals.length : 0) + (Array.isArray(b.questions) ? b.questions.length : 0);
 					if (wa !== wb) return wb - wa;
 					return (b.startTime || 0) - (a.startTime || 0);
 				})
@@ -438,7 +441,9 @@ window.__ModuleLoader__.load({
 
 			var active = st && st.active ? st.active : [];
 			var recent = st && st.recent ? st.recent : [];
-			var waiting = active.reduce(function (n, t) { return n + (Array.isArray(t.approvals) ? t.approvals.length : 0); }, 0);
+			var approvals = active.reduce(function (n, t) { return n + (Array.isArray(t.approvals) ? t.approvals.length : 0); }, 0);
+			var asks = active.reduce(function (n, t) { return n + (Array.isArray(t.questions) ? t.questions.length : 0); }, 0);
+			var waiting = approvals + asks;
 
 			// 耗时本地走秒：轮询 2s 一跳会让秒数一跳跳两格，看着像卡住
 			var tickState = react.useState(0);
@@ -469,7 +474,10 @@ window.__ModuleLoader__.load({
 			var cls = "plp-pill", txt = null, title, dotColor = null;
 			if (waiting > 0) {
 				cls += " plp-wait";
-				txt = "✋ " + waiting + " 待确认" + (active.length > 1 ? " · " + active.length + " 任务" : "");
+				var parts = [];
+				if (approvals > 0) parts.push(approvals + " 待确认");
+				if (asks > 0) parts.push(asks + " 待选择");
+				txt = "✋ " + parts.join(" · ") + (active.length > 1 ? " · " + active.length + " 任务" : "");
 				title = active.length === 1 ? "点击跳转等待确认的会话" : "点击展开任务列表";
 			} else if (active.length > 0) {
 				cls += " plp-run";
@@ -544,6 +552,7 @@ window.__ModuleLoader__.load({
 					seenDone = new Set((st.recent || []).map(function (r) { return r.sessionId + ":" + r.endTime; }));
 					for (var t0 of (st.active || [])) {
 						for (var a0 of (t0.approvals || [])) seenApr.add(t0.sessionId + ":" + a0.id);
+						for (var q0 of (t0.questions || [])) seenAsk.add(t0.sessionId + ":" + q0.id);
 					}
 					return;
 				}
@@ -587,6 +596,25 @@ window.__ModuleLoader__.load({
 				}
 
 				var confirmCount = 0;
+				var askCount = 0;
+				if (cfg.notifyOnAsk !== false) {
+					for (var ta of (st.active || [])) {
+						for (var q of (ta.questions || [])) {
+							var qkey = ta.sessionId + ":" + q.id;
+							if (seenAsk.has(qkey)) continue;
+							seenAsk.add(qkey);
+							askCount++;
+							var qHead = q.header || (q.count > 1 ? q.count + " 个问题" : "选项");
+							added.push({
+								id: qkey,
+								kind: "ask",
+								title: "❓ 等待选择：" + qHead + (q.optionCount > 0 ? "（" + q.optionCount + " 个选项）" : ""),
+								meta: truncate(q.text || "", 100),
+								sessionId: ta.sessionId,
+							});
+						}
+					}
+				}
 				if (cfg.notifyOnConfirm !== false) {
 					for (var t of (st.active || [])) {
 						for (var a of (t.approvals || [])) {
@@ -620,15 +648,16 @@ window.__ModuleLoader__.load({
 					// 每次刷新最多响一次，且只有 leader 窗口发声：多任务结不叠音、多窗口不重响
 					var leader = isLeader();
 					if (leader && cfg.soundNotify !== false) {
-						if (confirmCount > 0) playSound("ding", "ok");
+						if (confirmCount + askCount > 0) playSound("ding", "ok");
 						else playSound(cfg.soundEffect, pending.length > 0 && !pending[0].ok ? "error" : "ok");
 					}
 					if (leader && cfg.systemNotify && (cfg.systemNotifyAlways || !watching)) {
-						var head = confirmCount > 0
-							? "✋ dsh 任务等待确认"
+						var head = confirmCount + askCount > 0
+							? (askCount > 0 ? "❓ dsh 等你选择" : "✋ dsh 任务等待确认")
 							: (pending.length >= 2 ? "🔔 " + pending.length + " 个任务已结束"
 								: (pending.length === 1 ? (pending[0].ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(pending[0].endReason)) : ""));
-						var body = confirmCount > 0 ? (confirmCount + " 个工具在等确认") : (pending.length > 0 ? (pending[0].title || "") : "");
+						var body = askCount > 0 ? (askCount + " 组选项在等你拍板")
+							: (confirmCount > 0 ? (confirmCount + " 个工具在等确认") : (pending.length > 0 ? (pending[0].title || "") : ""));
 						if (head) systemNotify(head, body, "dsh-task-capsule-batch", pending.length > 0 ? pending[0].sessionId : "");
 					}
 				}
@@ -652,7 +681,7 @@ window.__ModuleLoader__.load({
 			var stackNode = h("div", { className: "pln-stack" + (livePane ? "" : " pln-fixed"), "aria-live": "polite", "aria-atomic": "false" }, toasts.map(function (t) {
 				return h("div", {
 					key: t.id,
-					className: "pln-toast" + (t.kind === "error" ? " err" : t.kind === "confirm" ? " warn" : ""),
+					className: "pln-toast" + (t.kind === "error" ? " err" : t.kind === "ask" ? " ask" : t.kind === "confirm" ? " warn" : ""),
 				},
 					h("div", { className: "pln-title" }, t.title),
 					h("div", { className: "pln-meta" }, t.meta),
@@ -772,6 +801,11 @@ window.__ModuleLoader__.load({
 						onToggle: function () { patch({ notifyOnConfirm: cfg.notifyOnConfirm === false }); },
 					}),
 					h(SwitchRow, {
+						label: "选项提醒", desc: "DSH 弹选项选择（ask_user_question）等你拍板时提醒；不选它回合就一直停着",
+						on: cfg.notifyOnAsk !== false,
+						onToggle: function () { patch({ notifyOnAsk: cfg.notifyOnAsk === false }); },
+					}),
+					h(SwitchRow, {
 						label: "提示音", desc: "WebAudio 合成，无音频文件",
 						on: cfg.soundNotify !== false,
 						onToggle: function () { patch({ soundNotify: cfg.soundNotify === false }); },
@@ -826,6 +860,49 @@ window.__ModuleLoader__.load({
 			return d.getTime();
 		}
 
+		function dayStartAt(offset) {
+			return todayStart() - (Number(offset) || 0) * 86400000;
+		}
+
+		function dayLabel(offset) {
+			if (offset === 0) return "今天";
+			if (offset === 1) return "昨天";
+			var d = new Date(dayStartAt(offset));
+			return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+		}
+
+		function ledgerCsv(records) {
+			var head = "endedAt,title,endReason,durationMs,steps,toolCalls,approvalCount,approvalWaitMs,models,recovered,sessionId";
+			var rows = [head];
+			for (var r of records) {
+				var line = [
+					new Date(r.endTime || 0).toISOString(),
+					r.title || "",
+					r.endReason || "",
+					r.duration || 0,
+					r.steps || 0,
+					r.toolCalls || 0,
+					r.approvalCount || 0,
+					r.approvalWaitMs || 0,
+					(r.models || []).join("|"),
+					r.recovered ? "true" : "false",
+					r.sessionId || "",
+				];
+				rows.push(line.map(function (v) {
+					v = String(v);
+					return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+				}).join(","));
+			}
+			// BOM：让 Excel 认出 UTF-8 的中文
+			return "\uFEFF" + rows.join("\r\n");
+		}
+
+		function ledgerJsonl(records) {
+			var out = "";
+			for (var r of records) out += JSON.stringify(r) + "\n";
+			return out;
+		}
+
 		function summarizeLine(s) {
 			if (!s || !s.count) return "今天还没有完成任务。";
 			var parts = ["今天 " + s.count + " 个任务", "共 " + fmtDur(s.durationMs)];
@@ -842,10 +919,14 @@ window.__ModuleLoader__.load({
 			var openId = openState[0], setOpenId = openState[1];
 			var copyState = react.useState("");
 			var copied = copyState[0], setCopied = copyState[1];
+			var dayState = react.useState(0);
+			var dayOff = dayState[0], setDayOff = dayState[1];
 
-			function load(offset) {
+			function load(offset, day) {
+				day = day === undefined ? dayOff : day;
+				var day0 = dayStartAt(day);
 				setView(function (v) { return Object.assign({}, v, { loading: true, error: null }); });
-				rpc("dsh-task-capsule/ledger", "query", { since: todayStart(), limit: 10, offset: offset || 0 }).then(function (data) {
+				rpc("dsh-task-capsule/ledger", "query", { since: day0, until: day0 + 86400000, limit: 10, offset: offset || 0 }).then(function (data) {
 					setView(function (v) {
 						return {
 							loading: false, error: null,
@@ -857,7 +938,28 @@ window.__ModuleLoader__.load({
 					setView(function (v) { return Object.assign({}, v, { loading: false, error: (e && e.message) || String(e) }); });
 				});
 			}
-			react.useEffect(function () { load(0); }, []);
+			react.useEffect(function () { load(0); }, [dayOff]);
+
+			function exportDay(fmt) {
+				var day0 = dayStartAt(dayOff);
+				rpc("dsh-task-capsule/ledger", "export", { since: day0, until: day0 + 86400000 }).then(function (data) {
+					var records = data.records || [];
+					if (records.length === 0) return;
+					var text = fmt === "csv" ? ledgerCsv(records) : ledgerJsonl(records);
+					var d = new Date(day0);
+					var tag = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+					var blob = new Blob([text], { type: fmt === "csv" ? "text/csv;charset=utf-8" : "application/x-ndjson" });
+					var a = document.createElement("a");
+					a.href = URL.createObjectURL(blob);
+					a.download = "dsh-tasks-" + tag + "." + fmt;
+					document.body.appendChild(a);
+					a.click();
+					a.remove();
+					setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+				}).catch(function (e) {
+					console.error("[dsh-task-capsule] export failed:", e && e.message);
+				});
+			}
 
 			function copy(r) {
 				var text = [
@@ -890,7 +992,18 @@ window.__ModuleLoader__.load({
 			}
 
 			return h("div", { className: "pls-card pls-ledger" },
-				h("div", { className: "pls-label" }, h("div", null, "任务账本 · 今天")),
+				h("div", { className: "pls-label", style: { display: "flex", alignItems: "center", gap: "6px" } },
+					h("div", null, "任务账本"),
+					h("button", { type: "button", className: "pls-btn", "aria-label": "往前一天", onClick: function () { setDayOff(dayOff + 1); } }, "‹"),
+					h("span", { className: "pls-desc", style: { margin: "0" } }, dayLabel(dayOff)),
+					h("button", {
+						type: "button", className: "pls-btn", "aria-label": "往后一天",
+						disabled: dayOff === 0,
+						onClick: function () { setDayOff(Math.max(0, dayOff - 1)); },
+					}, "›"),
+					h("span", { style: { flex: "1" } }),
+					h("button", { type: "button", className: "pls-btn", onClick: function () { exportDay("csv"); } }, "导出 CSV"),
+					h("button", { type: "button", className: "pls-btn", onClick: function () { exportDay("jsonl"); } }, "JSONL")),
 				h("div", { className: "pls-desc" }, summarizeLine(view.summary)),
 				view.records.map(function (r) {
 					var open = openId === r.recordId;
@@ -911,7 +1024,7 @@ window.__ModuleLoader__.load({
 							h("div", null, "开始 " + new Date(r.startTime || 0).toLocaleString() + " → 结束 " + new Date(r.endTime || 0).toLocaleString()),
 							h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? "已复制" : "复制摘要")) : null);
 				}),
-				(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, "今天还没有记录。") : null,
+				(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, (dayOff === 0 ? "今天" : dayLabel(dayOff)) + "还没有记录。") : null,
 				view.records.length < view.total
 					? h("button", { type: "button", className: "pls-btn", onClick: function () { load(view.records.length); } },
 						view.loading ? "正在读取…" : "加载更多（还有 " + (view.total - view.records.length) + " 条）")
