@@ -122,6 +122,7 @@ curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
 ## 版本与更新
 
 - 版本以 `package.json` 为准，改动见 [Releases](https://github.com/wzn16/dsh-task-capsule/releases)。
+- 📝 中文介绍与设计思路：[掘金 · 我给 AI 编码工具写了本「任务账本」](https://juejin.cn/spost/7699013116714156067)
 - 更新：`cd 你的克隆目录 && git pull` → 完全退出并重启 DSH Desktop。`link:` 安装不会自动跟版本。
 - 出问题按 [docs/ROLLBACK.md](docs/ROLLBACK.md) 取证与回滚。
 
