@@ -201,7 +201,7 @@ export function createLedger({ log = console } = {}) {
       if (!item || !item.sessionId) continue
       out.push(append({
         sessionId: item.sessionId,
-        title: item.title || '(无标题)',
+        title: item.title || '',
         duration: Math.max(0, (Number(item.lastActivityAt) || Number(open.at) || Date.now()) - (Number(item.startTime) || 0)),
         turns: Number(item.turns) || 0,
         steps: Number(item.steps) || 0,

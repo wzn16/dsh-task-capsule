@@ -111,7 +111,7 @@ export function createTracker(ctx) {
     const duration = endTime - session.startTime
     const record = {
       sessionId: sid,
-      title: session.title || truncate(session.firstPrompt, 60) || '(无标题)',
+      title: session.title || truncate(session.firstPrompt, 60) || '',
       duration,
       turns: session.turns,
       steps: session.steps,
@@ -321,7 +321,7 @@ export function createTracker(ctx) {
       for (const [sid, s] of activeSessions) {
         active.push({
           sessionId: sid,
-          title: s.title || truncate(s.firstPrompt, 60) || '(无标题)',
+          title: s.title || truncate(s.firstPrompt, 60) || '',
           startTime: s.startTime,
           elapsed: at - s.startTime,
           turns: s.turns,
