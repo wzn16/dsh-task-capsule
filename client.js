@@ -23,6 +23,523 @@ window.__ModuleLoader__.load({
 		var reactDom = require("react-dom");
 		var h = react.createElement;
 
+		//#region i18n
+		// 词条源码在 locale/*.json，下面这段由 `node scripts/gen-locale.mjs` 生成，别手改。
+		// zh 是作者的原文，也是默认值与兜底：locale 服务缺失、词条缺失、语言未知时都回落到它。
+		/* locale-messages:start */
+		var MESSAGES = {
+			"zh": {
+				"ask.optionCount": " 个选项）",
+				"ask.options": "选项",
+				"ask.questions": " 个问题",
+				"ask.waitingTitle": "❓ 等待选择：",
+				"capsule.activeCount": " 个任务 · ",
+				"capsule.approvalsSuffix": " 待确认",
+				"capsule.asksSuffix": " 待选择",
+				"capsule.empty": "暂无任务记录",
+				"capsule.idleNoTasks": "空闲 · 无任务",
+				"capsule.idlePrefix": "空闲 · ",
+				"capsule.idleRecent": "空闲 · 点击展开最近完成",
+				"capsule.rpcTimeout": "请求超时（",
+				"capsule.rpcTimeoutSuffix": "s）",
+				"capsule.tasksSuffix": " 任务",
+				"capsule.titleExpand": "点击展开任务列表",
+				"capsule.titleJump": "点击跳转对应会话",
+				"capsule.titleSingleConfirm": "点击跳转等待确认的会话",
+				"capsule.titleUnread": " 条未读，点击展开",
+				"capsule.unreadSuffix": " 条未读",
+				"common.colon": "：",
+				"common.listSep": "、",
+				"common.openParen": "（",
+				"common.period": "。",
+				"common.pipe": "｜",
+				"common.untitled": "(无标题)",
+				"confirm.toolFallback": "工具",
+				"confirm.waitingTitle": "✋ 等待确认：",
+				"end.aborted": "已中止",
+				"end.blocked": "受阻",
+				"end.completed": "完成",
+				"end.disposed": "会话已关闭",
+				"end.error": "出错",
+				"end.interrupted": "中断",
+				"end.maxTokens": "达输出上限",
+				"end.unknown": "结果未知",
+				"error.noSlots": "[dsh-task-capsule] 宿主未提供 slots 服务（版本不兼容？）——胶囊与通知不可用，仅设置页保留",
+				"ledger.chipConfirm": "等确认 ",
+				"ledger.chipFail": "失败 ",
+				"ledger.chipInterrupted": "中断 ",
+				"ledger.collapse": "▾ 收起",
+				"ledger.copied": "已复制",
+				"ledger.copy": "复制摘要",
+				"ledger.daySuffix": "日",
+				"ledger.emptyToday": "今天还没有记录",
+				"ledger.emptyTodaySummary": "今天还没有完成任务。",
+				"ledger.end": "结束：",
+				"ledger.expand": "▸ 展开",
+				"ledger.loadMore": "加载更多（还有 ",
+				"ledger.loadMoreClose": " 条）",
+				"ledger.loading": "正在读取…",
+				"ledger.models": "模型：",
+				"ledger.monthSuffix": "月",
+				"ledger.nextDay": "往后一天",
+				"ledger.noRecords": "还没有记录。",
+				"ledger.prevDay": "往前一天",
+				"ledger.readFailed": "读取失败：",
+				"ledger.reading": "读取中…",
+				"ledger.recoveredTag": "（中断恢复）",
+				"ledger.retry": "重试",
+				"ledger.rowApprovalWait": "审批等待 ",
+				"ledger.rowApprovals": " 次审批，共等 ",
+				"ledger.rowSteps": " 步 / ",
+				"ledger.rowStepsDot": " 步 · ",
+				"ledger.rowTools": " 次工具",
+				"ledger.rowToolsLong": " 次工具调用",
+				"ledger.start": "开始 ",
+				"ledger.startEnd": " → 结束 ",
+				"ledger.summaryApprovalWait": "等你确认 ",
+				"ledger.summaryFailed": " 个没跑成",
+				"ledger.summaryInterrupted": " 个中断",
+				"ledger.summaryPrefix": "今天 ",
+				"ledger.summaryRecoveredClose": " 个重启恢复）",
+				"ledger.summaryRecoveredOpen": "（含 ",
+				"ledger.summaryTasks": " 个任务",
+				"ledger.summaryTotal": "共 ",
+				"ledger.title": "任务账本",
+				"ledger.today": "今天",
+				"ledger.yesterday": "昨天",
+				"notify.askBodySuffix": " 组选项在等你拍板",
+				"notify.askTitle": "❓ dsh 等你选择",
+				"notify.confirmBodySuffix": " 个工具在等确认",
+				"notify.confirmTitle": "✋ dsh 任务等待确认",
+				"notify.doneTitle": "✅ dsh 任务完成",
+				"notify.failTitle": "❌ dsh 任务",
+				"notify.testBodyDisabled": "通知权限正常，但「浏览器系统通知」开关未开：任务结束时不会推送系统通知，请到设置里打开开关。",
+				"notify.testBodyOk": "系统通知链路已打通：任务完成 / 等待确认时会在系统通知中心提醒。",
+				"notify.testTitle": "✅ dsh-task-capsule 测试通知",
+				"notify.testTitleWarn": "⚠️ dsh-task-capsule 测试通知（仅权限链路）",
+				"phase.busy": "工作中",
+				"phase.code": "编写代码",
+				"phase.search": "查资料",
+				"phase.think": "思考中",
+				"phase.write": "输出中",
+				"pop.activeHead": "进行中任务 · 点击跳转",
+				"pop.recentHead": "最近完成 · 点击跳转",
+				"settings.cardDuration": "卡片停留时长",
+				"settings.duration15s": "15 秒",
+				"settings.duration30s": "30 秒",
+				"settings.duration5s": "5 秒",
+				"settings.duration8s": "8 秒",
+				"settings.durationPersistent": "常驻直到手动关闭",
+				"settings.foreground": "前台时也推系统通知",
+				"settings.foregroundDesc": "默认仅页面在后台时推送；开启后任务结束/等待确认时不分前后台都推",
+				"settings.intro1": "会话 header 任务胶囊、完成/出错/等待时的提醒卡、按天记账的任务账本。",
+				"settings.intro2": "提醒只在你不在窗口前时发出；token 统计交给 DSH 自带会话统计条。",
+				"settings.loading": "正在读取通知配置…",
+				"settings.mainWindowOnly": "完成卡只弹主窗口",
+				"settings.mainWindowOnlyDesc": "多窗口时，完成/出错的页内卡片只由主窗口弹出（待确认、待选择不受影响）",
+				"settings.notifyAsk": "选项提醒",
+				"settings.notifyAskDesc": "DSH 弹选项选择（ask_user_question）等你拍板时提醒；不选它回合就一直停着",
+				"settings.notifyConfirm": "需确认通知",
+				"settings.notifyConfirmDesc": "工具等待批准时提醒",
+				"settings.notifyDone": "完成通知",
+				"settings.notifyDoneDesc": "任务正常结束时弹卡片",
+				"settings.notifyError": "异常通知",
+				"settings.notifyErrorDesc": "任务出错 / 中止 / 受阻时弹卡片",
+				"settings.permDefault": "未请求",
+				"settings.permDenied": "已被拒绝",
+				"settings.permDeniedGuide": "通知权限已被系统拒绝：请在 系统设置 → 通知 → DSH Desktop 中允许通知（Windows：设置 → 系统 → 通知），改完如未生效重启 DSH。",
+				"settings.permGranted": "已授权",
+				"settings.permGuide": "点右侧按钮弹出系统授权弹窗，允许后自动发送测试通知",
+				"settings.permRequest": "请求授权并测试",
+				"settings.permTest": "发测试通知",
+				"settings.permTitle": "系统通知权限",
+				"settings.permUnsupported": "当前环境不支持",
+				"settings.presetQuiet": "安静",
+				"settings.presetQuietDesc": "只有工具在等你确认时才提醒；完成与出错只记未读。",
+				"settings.presetStandard": "标准",
+				"settings.presetStandardDesc": "离开窗口时提醒一次；正看着屏幕时不打扰。",
+				"settings.presetWatch": "看护",
+				"settings.presetWatchDesc": "全部提醒，系统通知常开，卡片常驻到手动关闭。",
+				"settings.sectionHow": "怎么提醒",
+				"settings.sectionIntensity": "提醒强度",
+				"settings.sectionWhat": "提醒什么",
+				"settings.sound": "提示音",
+				"settings.soundChime": "chime（双音）",
+				"settings.soundDesc": "WebAudio 合成，无音频文件；等待确认与选项固定单音",
+				"settings.soundDing": "ding（单音）",
+				"settings.soundEffect": "完成提示音音效",
+				"settings.soundForeground": "前台时也提示音",
+				"settings.soundForegroundDesc": "默认只在离开窗口时响；开启后任务结束/等待确认时，看没看屏幕都会响",
+				"settings.soundTest": "测试提示音",
+				"settings.soundTestAction": "播放一下",
+				"settings.systemNotify": "浏览器系统通知",
+				"settings.systemNotifyDesc": "Electron 客户端内为系统级通知（macOS 通知中心 / Windows Toast）",
+				"slot.capsuleLabel": "dsh-task-capsule 任务胶囊",
+				"slot.overlayLabel": "dsh-task-capsule 通知卡栈",
+				"slot.settingsLabel": "任务胶囊",
+				"toast.action": "前往会话 →",
+				"toast.actionLabel": "前往对应会话",
+				"toast.allDone": "（全部完成）",
+				"toast.badSuffix": " 个异常）",
+				"toast.close": "关闭",
+				"toast.detailsHint": "｜详情见胶囊下拉",
+				"toast.donePrefix": "✅ 完成：",
+				"toast.finishedCount": " 个任务已结束",
+				"toast.longest": "最长 ",
+				"unit.hour": "小时",
+				"unit.minute": "分",
+				"unit.second": "秒"
+			},
+			"en": {
+				"ask.optionCount": " options)",
+				"ask.options": "Options",
+				"ask.questions": " questions",
+				"ask.waitingTitle": "❓ Waiting for a choice: ",
+				"capsule.activeCount": " tasks · ",
+				"capsule.approvalsSuffix": " awaiting approval",
+				"capsule.asksSuffix": " awaiting choice",
+				"capsule.empty": "No tasks yet",
+				"capsule.idleNoTasks": "Idle · no tasks",
+				"capsule.idlePrefix": "Idle · ",
+				"capsule.idleRecent": "Idle · click to see recent completions",
+				"capsule.rpcTimeout": "Request timed out (",
+				"capsule.rpcTimeoutSuffix": "s)",
+				"capsule.tasksSuffix": " tasks",
+				"capsule.titleExpand": "Click to expand the task list",
+				"capsule.titleJump": "Click to open the session",
+				"capsule.titleSingleConfirm": "Click to open the session waiting for approval",
+				"capsule.titleUnread": " unread, click to expand",
+				"capsule.unreadSuffix": " unread",
+				"common.colon": ": ",
+				"common.listSep": ", ",
+				"common.openParen": " (",
+				"common.period": ". ",
+				"common.pipe": " | ",
+				"common.untitled": "(untitled)",
+				"confirm.toolFallback": "tool",
+				"confirm.waitingTitle": "✋ Waiting for approval: ",
+				"end.aborted": "Cancelled",
+				"end.blocked": "Blocked",
+				"end.completed": "Done",
+				"end.disposed": "Session closed",
+				"end.error": "Error",
+				"end.interrupted": "Interrupted",
+				"end.maxTokens": "Hit output limit",
+				"end.unknown": "Unknown result",
+				"error.noSlots": "[dsh-task-capsule] the host does not provide the slots service (incompatible version?) — capsule and notifications are unavailable, only the settings page stays active",
+				"ledger.chipConfirm": "Awaiting ",
+				"ledger.chipFail": "Failed: ",
+				"ledger.chipInterrupted": "Interrupted: ",
+				"ledger.collapse": "▾ Collapse",
+				"ledger.copied": "Copied",
+				"ledger.copy": "Copy summary",
+				"ledger.daySuffix": "",
+				"ledger.emptyToday": "No records today yet",
+				"ledger.emptyTodaySummary": "No tasks have finished today yet.",
+				"ledger.end": "End: ",
+				"ledger.expand": "▸ Expand",
+				"ledger.loadMore": "Load more (",
+				"ledger.loadMoreClose": " left)",
+				"ledger.loading": "Reading…",
+				"ledger.models": "Models: ",
+				"ledger.monthSuffix": "/",
+				"ledger.nextDay": "Next day",
+				"ledger.noRecords": " no records yet.",
+				"ledger.prevDay": "Previous day",
+				"ledger.readFailed": "Failed to read: ",
+				"ledger.reading": "Reading…",
+				"ledger.recoveredTag": " (recovered)",
+				"ledger.retry": "Retry",
+				"ledger.rowApprovalWait": "Approval wait ",
+				"ledger.rowApprovals": " approvals, waiting ",
+				"ledger.rowSteps": " steps / ",
+				"ledger.rowStepsDot": " steps · ",
+				"ledger.rowTools": " tool calls",
+				"ledger.rowToolsLong": " tool calls",
+				"ledger.start": "Start ",
+				"ledger.startEnd": " → End ",
+				"ledger.summaryApprovalWait": "waiting on you ",
+				"ledger.summaryFailed": " failed",
+				"ledger.summaryInterrupted": " interrupted",
+				"ledger.summaryPrefix": "Today: ",
+				"ledger.summaryRecoveredClose": " recovered after restart)",
+				"ledger.summaryRecoveredOpen": " (incl. ",
+				"ledger.summaryTasks": " tasks",
+				"ledger.summaryTotal": "Total: ",
+				"ledger.title": "Task ledger",
+				"ledger.today": "Today",
+				"ledger.yesterday": "Yesterday",
+				"notify.askBodySuffix": " option groups waiting for you",
+				"notify.askTitle": "❓ dsh is waiting for your choice",
+				"notify.confirmBodySuffix": " tools waiting for approval",
+				"notify.confirmTitle": "✋ A dsh task awaits approval",
+				"notify.doneTitle": "✅ dsh task finished",
+				"notify.failTitle": "❌ dsh task",
+				"notify.testBodyDisabled": "Notification permission is fine, but the “System notifications” switch is off: nothing is sent when tasks finish. Turn it on in Settings.",
+				"notify.testBodyOk": "System notifications are working: you will be alerted in the notification center when a task finishes or waits for approval.",
+				"notify.testTitle": "✅ dsh-task-capsule test notification",
+				"notify.testTitleWarn": "⚠️ dsh-task-capsule test notification (permission check only)",
+				"phase.busy": "Working",
+				"phase.code": "Coding",
+				"phase.search": "Researching",
+				"phase.think": "Thinking",
+				"phase.write": "Writing",
+				"pop.activeHead": "Running tasks · click to open",
+				"pop.recentHead": "Recently finished · click to open",
+				"settings.cardDuration": "Card duration",
+				"settings.duration15s": "15 s",
+				"settings.duration30s": "30 s",
+				"settings.duration5s": "5 s",
+				"settings.duration8s": "8 s",
+				"settings.durationPersistent": "Stays until closed",
+				"settings.foreground": "Notify in the foreground too",
+				"settings.foregroundDesc": "By default only while the page is in the background; when on, it also notifies while you are watching",
+				"settings.intro1": "A task capsule in the session header, alert cards on completion/error/waiting, and a daily task ledger.",
+				"settings.intro2": "Alerts only fire while you are away from the window; token counting stays with the DSH stats bar.",
+				"settings.loading": "Reading notification settings…",
+				"settings.mainWindowOnly": "Completion card in the main window only",
+				"settings.mainWindowOnlyDesc": "With several windows, the completion/error card is only shown by the main window (approvals and choices are unaffected)",
+				"settings.notifyAsk": "Choice alert",
+				"settings.notifyAskDesc": "Alert when DSH asks you to choose (ask_user_question); the turn stays paused until you pick",
+				"settings.notifyConfirm": "Approval alert",
+				"settings.notifyConfirmDesc": "Alert when a tool awaits approval",
+				"settings.notifyDone": "Completion alert",
+				"settings.notifyDoneDesc": "Show a card when a task finishes normally",
+				"settings.notifyError": "Error alert",
+				"settings.notifyErrorDesc": "Show a card when a task fails, is cancelled or gets blocked",
+				"settings.permDefault": "Not requested",
+				"settings.permDenied": "Denied",
+				"settings.permDeniedGuide": "Notification permission was refused by the system: allow notifications for DSH Desktop in System Settings → Notifications (Windows: Settings → System → Notifications). Restart DSH if it does not take effect.",
+				"settings.permGranted": "Granted",
+				"settings.permGuide": "Click the button on the right to open the system permission prompt; a test notification is sent once you allow it.",
+				"settings.permRequest": "Request permission and test",
+				"settings.permTest": "Send a test notification",
+				"settings.permTitle": "Notification permission",
+				"settings.permUnsupported": "Not supported here",
+				"settings.presetQuiet": "Quiet",
+				"settings.presetQuietDesc": "Only alert when a tool awaits approval; completions and errors just count as unread.",
+				"settings.presetStandard": "Standard",
+				"settings.presetStandardDesc": "Alert once when you leave the window; stay quiet while you are watching.",
+				"settings.presetWatch": "Watchful",
+				"settings.presetWatchDesc": "Alert on everything, keep system notifications on, and leave cards open until closed.",
+				"settings.sectionHow": "How to alert",
+				"settings.sectionIntensity": "Alert level",
+				"settings.sectionWhat": "What to alert",
+				"settings.sound": "Sound",
+				"settings.soundChime": "chime (two tones)",
+				"settings.soundDesc": "Synthesised with WebAudio, no audio files; approvals and choices always use a single tone",
+				"settings.soundDing": "ding (one tone)",
+				"settings.soundEffect": "Completion sound",
+				"settings.soundForeground": "Beep in the foreground too",
+				"settings.soundForegroundDesc": "By default it only beeps while you are away; when on, it beeps on completion/approval whether or not you are watching",
+				"settings.soundTest": "Test sound",
+				"settings.soundTestAction": "Play it",
+				"settings.systemNotify": "System notifications",
+				"settings.systemNotifyDesc": "Inside the Electron client these are system-level notifications (macOS Notification Center / Windows toast)",
+				"slot.capsuleLabel": "dsh-task-capsule · capsule",
+				"slot.overlayLabel": "dsh-task-capsule · toasts",
+				"slot.settingsLabel": "Task capsule",
+				"toast.action": "Open session →",
+				"toast.actionLabel": "Go to the session",
+				"toast.allDone": " (all done)",
+				"toast.badSuffix": " with errors)",
+				"toast.close": "Close",
+				"toast.detailsHint": " | details in the capsule menu",
+				"toast.donePrefix": "✅ Done: ",
+				"toast.finishedCount": " tasks finished",
+				"toast.longest": "Longest: ",
+				"unit.hour": "h ",
+				"unit.minute": "m ",
+				"unit.second": "s"
+			},
+			"pt": {
+				"ask.optionCount": " opções)",
+				"ask.options": "Opções",
+				"ask.questions": " perguntas",
+				"ask.waitingTitle": "❓ À espera de escolha: ",
+				"capsule.activeCount": " tarefas · ",
+				"capsule.approvalsSuffix": " por confirmar",
+				"capsule.asksSuffix": " por escolher",
+				"capsule.empty": "Sem tarefas registadas",
+				"capsule.idleNoTasks": "Inativo · sem tarefas",
+				"capsule.idlePrefix": "Inativo · ",
+				"capsule.idleRecent": "Inativo · clique para ver as concluídas recentes",
+				"capsule.rpcTimeout": "Pedido expirou (",
+				"capsule.rpcTimeoutSuffix": "s)",
+				"capsule.tasksSuffix": " tarefas",
+				"capsule.titleExpand": "Clique para expandir a lista de tarefas",
+				"capsule.titleJump": "Clique para abrir a sessão",
+				"capsule.titleSingleConfirm": "Clique para abrir a sessão à espera de confirmação",
+				"capsule.titleUnread": " não lidas, clique para expandir",
+				"capsule.unreadSuffix": " não lidas",
+				"common.colon": ": ",
+				"common.listSep": ", ",
+				"common.openParen": " (",
+				"common.period": ". ",
+				"common.pipe": " | ",
+				"common.untitled": "(sem título)",
+				"confirm.toolFallback": "ferramenta",
+				"confirm.waitingTitle": "✋ À espera de confirmação: ",
+				"end.aborted": "Cancelado",
+				"end.blocked": "Bloqueado",
+				"end.completed": "Concluído",
+				"end.disposed": "Sessão fechada",
+				"end.error": "Erro",
+				"end.interrupted": "Interrompido",
+				"end.maxTokens": "Limite de tokens",
+				"end.unknown": "Resultado desconhecido",
+				"error.noSlots": "[dsh-task-capsule] o host não fornece o serviço slots (versão incompatível?) — o indicador e as notificações não estão disponíveis; só a página de definições fica ativa",
+				"ledger.chipConfirm": "A confirmar ",
+				"ledger.chipFail": "Falhas: ",
+				"ledger.chipInterrupted": "Interrompidas: ",
+				"ledger.collapse": "▾ Recolher",
+				"ledger.copied": "Copiado",
+				"ledger.copy": "Copiar resumo",
+				"ledger.daySuffix": "",
+				"ledger.emptyToday": "Ainda sem registos hoje",
+				"ledger.emptyTodaySummary": "Ainda não há tarefas concluídas hoje.",
+				"ledger.end": "Fim: ",
+				"ledger.expand": "▸ Expandir",
+				"ledger.loadMore": "Carregar mais (faltam ",
+				"ledger.loadMoreClose": ")",
+				"ledger.loading": "A ler…",
+				"ledger.models": "Modelo: ",
+				"ledger.monthSuffix": "/",
+				"ledger.nextDay": "Dia seguinte",
+				"ledger.noRecords": " ainda sem registos.",
+				"ledger.prevDay": "Dia anterior",
+				"ledger.readFailed": "Falha na leitura: ",
+				"ledger.reading": "A ler…",
+				"ledger.recoveredTag": " (recuperada após interrupção)",
+				"ledger.retry": "Tentar novamente",
+				"ledger.rowApprovalWait": "Espera de aprovação ",
+				"ledger.rowApprovals": " aprovações, espera total de ",
+				"ledger.rowSteps": " passos / ",
+				"ledger.rowStepsDot": " passos · ",
+				"ledger.rowTools": " chamadas de ferramentas",
+				"ledger.rowToolsLong": " chamadas de ferramentas",
+				"ledger.start": "Início ",
+				"ledger.startEnd": " → Fim ",
+				"ledger.summaryApprovalWait": "à espera de confirmação ",
+				"ledger.summaryFailed": " falhadas",
+				"ledger.summaryInterrupted": " interrompidas",
+				"ledger.summaryPrefix": "Hoje: ",
+				"ledger.summaryRecoveredClose": " recuperadas após reinício)",
+				"ledger.summaryRecoveredOpen": " (inclui ",
+				"ledger.summaryTasks": " tarefas",
+				"ledger.summaryTotal": "Total: ",
+				"ledger.title": "Registo de tarefas",
+				"ledger.today": "Hoje",
+				"ledger.yesterday": "Ontem",
+				"notify.askBodySuffix": " conjuntos de opções à sua espera",
+				"notify.askTitle": "❓ O dsh espera a sua escolha",
+				"notify.confirmBodySuffix": " ferramentas à espera de confirmação",
+				"notify.confirmTitle": "✋ Uma tarefa do dsh aguarda confirmação",
+				"notify.doneTitle": "✅ Tarefa do dsh concluída",
+				"notify.failTitle": "❌ Tarefa do dsh",
+				"notify.testBodyDisabled": "A permissão de notificações está OK, mas a opção «Notificações do sistema» está desligada: nada será enviado quando as tarefas terminarem. Ative-a nas definições.",
+				"notify.testBodyOk": "Notificações do sistema a funcionar: será avisado no centro de notificações quando uma tarefa terminar ou aguardar confirmação.",
+				"notify.testTitle": "✅ dsh-task-capsule · notificação de teste",
+				"notify.testTitleWarn": "⚠️ dsh-task-capsule · notificação de teste (apenas permissões)",
+				"phase.busy": "A trabalhar",
+				"phase.code": "A programar",
+				"phase.search": "A pesquisar",
+				"phase.think": "A pensar",
+				"phase.write": "A escrever",
+				"pop.activeHead": "Tarefas em curso · clique para abrir",
+				"pop.recentHead": "Concluídas recentemente · clique para abrir",
+				"settings.cardDuration": "Duração do cartão",
+				"settings.duration15s": "15 s",
+				"settings.duration30s": "30 s",
+				"settings.duration5s": "5 s",
+				"settings.duration8s": "8 s",
+				"settings.durationPersistent": "Fica até ser fechado",
+				"settings.foreground": "Notificar também em primeiro plano",
+				"settings.foregroundDesc": "Por omissão só notifica com a página em segundo plano; se ativar, notifica sempre que uma tarefa termina ou aguarda confirmação",
+				"settings.intro1": "Indicador de tarefas no cabeçalho da sessão, cartões de aviso em conclusão/erro/espera e um registo diário de tarefas.",
+				"settings.intro2": "Os avisos só são emitidos quando não está na janela; a contagem de tokens fica a cargo da barra de estatísticas do DSH.",
+				"settings.loading": "A ler a configuração de notificações…",
+				"settings.mainWindowOnly": "Cartão de conclusão só na janela principal",
+				"settings.mainWindowOnlyDesc": "Com várias janelas, o cartão de conclusão/erro só aparece na janela principal (confirmações e escolhas não são afetadas)",
+				"settings.notifyAsk": "Aviso de escolha",
+				"settings.notifyAskDesc": "Avisa quando o DSH pede uma escolha (ask_user_question); enquanto não escolher, o turno fica parado",
+				"settings.notifyConfirm": "Aviso de confirmação",
+				"settings.notifyConfirmDesc": "Avisa quando uma ferramenta aguarda aprovação",
+				"settings.notifyDone": "Aviso de conclusão",
+				"settings.notifyDoneDesc": "Mostra um cartão quando uma tarefa termina normalmente",
+				"settings.notifyError": "Aviso de erro",
+				"settings.notifyErrorDesc": "Mostra um cartão quando uma tarefa falha, é cancelada ou fica bloqueada",
+				"settings.permDefault": "Não pedido",
+				"settings.permDenied": "Recusado",
+				"settings.permDeniedGuide": "A permissão de notificações foi recusada pelo sistema: permita as notificações em Definições do sistema → Notificações → DSH Desktop (Windows: Definições → Sistema → Notificações). Se não ficar a funcionar, reinicie o DSH.",
+				"settings.permGranted": "Autorizado",
+				"settings.permGuide": "Clique no botão à direita para abrir o pedido de autorização do sistema; depois de permitir, é enviada uma notificação de teste.",
+				"settings.permRequest": "Pedir autorização e testar",
+				"settings.permTest": "Enviar notificação de teste",
+				"settings.permTitle": "Permissão de notificações",
+				"settings.permUnsupported": "Não suportado neste ambiente",
+				"settings.presetQuiet": "Silencioso",
+				"settings.presetQuietDesc": "Só avisa quando uma ferramenta aguarda confirmação; conclusões e erros ficam apenas como não lidos.",
+				"settings.presetStandard": "Normal",
+				"settings.presetStandardDesc": "Avisa uma vez quando sai da janela; não incomoda enquanto está a olhar para o ecrã.",
+				"settings.presetWatch": "Vigilância",
+				"settings.presetWatchDesc": "Avisa sempre, notificações do sistema sempre ligadas e o cartão fica aberto até o fechar.",
+				"settings.sectionHow": "Como avisar",
+				"settings.sectionIntensity": "Intensidade dos avisos",
+				"settings.sectionWhat": "O que avisar",
+				"settings.sound": "Som",
+				"settings.soundChime": "chime (dois tons)",
+				"settings.soundDesc": "Sintetizado com WebAudio, sem ficheiros de áudio; confirmações e escolhas usam sempre um único tom",
+				"settings.soundDing": "ding (um tom)",
+				"settings.soundEffect": "Som de conclusão",
+				"settings.soundForeground": "Som também em primeiro plano",
+				"settings.soundForegroundDesc": "Por omissão só apita quando estás fora da janela; se ativar, apita no fim da tarefa ou à espera de confirmação, estejas a ver ou não",
+				"settings.soundTest": "Testar som",
+				"settings.soundTestAction": "Tocar",
+				"settings.systemNotify": "Notificações do sistema",
+				"settings.systemNotifyDesc": "No cliente Electron são notificações do sistema (Centro de Notificações do macOS / Toast do Windows)",
+				"slot.capsuleLabel": "dsh-task-capsule · tarefas",
+				"slot.overlayLabel": "dsh-task-capsule · notificações",
+				"slot.settingsLabel": "Tarefas",
+				"toast.action": "Abrir sessão →",
+				"toast.actionLabel": "Ir para a sessão",
+				"toast.allDone": " (todas concluídas)",
+				"toast.badSuffix": " com erros)",
+				"toast.close": "Fechar",
+				"toast.detailsHint": " | detalhes na lista do indicador",
+				"toast.donePrefix": "✅ Concluído: ",
+				"toast.finishedCount": " tarefas terminaram",
+				"toast.longest": "Mais longa: ",
+				"unit.hour": "h ",
+				"unit.minute": "m ",
+				"unit.second": "s"
+			}
+		};
+		/* locale-messages:end */
+		var FALLBACK_LOCALE = "zh";
+		var activeLocale = FALLBACK_LOCALE;
+
+		// 只认主语言标签：pt-BR / pt-PT → pt，en-US → en，其余回退 zh
+		function resolveLocaleTag(id) {
+			var tag = String(id || "").toLowerCase();
+			if (tag.indexOf("zh") === 0) return "zh";
+			if (tag.indexOf("pt") === 0) return "pt";
+			if (tag.indexOf("en") === 0) return "en";
+			return FALLBACK_LOCALE;
+		}
+
+		function t(key) {
+			var dict = MESSAGES[activeLocale];
+			var text = dict ? dict[key] : undefined;
+			if (text === undefined) {
+				var base = MESSAGES[FALLBACK_LOCALE];
+				text = base ? base[key] : undefined;
+			}
+			return text === undefined ? key : text;
+		}
+		//#endregion
+
+
 		//#region css
 		var CSS = [
 			// 主题桥接：亮/暗两套强调色（与 dsh-dock 同款取值思路）
@@ -191,21 +708,21 @@ window.__ModuleLoader__.load({
 				return data;
 			}, function (e) {
 				clearTimer();
-				if (e && e.name === "AbortError") throw new Error("请求超时（" + (RPC_TIMEOUT_MS / 1000) + "s）");
+				if (e && e.name === "AbortError") throw new Error(t("capsule.rpcTimeout") + (RPC_TIMEOUT_MS / 1000) + t("capsule.rpcTimeoutSuffix"));
 				throw e;
 			});
 		}
 
-		var PHASE_LABELS = { think: "思考中", write: "输出中", code: "编写代码", search: "查资料" };
-		function phaseLabel(p) { return PHASE_LABELS[p] || "工作中"; }
+		var PHASE_KEYS = { think: "phase.think", write: "phase.write", code: "phase.code", search: "phase.search" };
+		function phaseLabel(p) { return t(PHASE_KEYS[p] || "phase.busy"); }
 		var PHASE_COLORS = { think: "#2f6fed", write: "#0d9488", code: "#b45309", search: "#0e7490" };
 		function phaseColor(p) { return PHASE_COLORS[p] || "#2f6fed"; }
-		var END_LABELS = {
-			completed: "完成", error: "出错", aborted: "已中止",
-			blocked: "受阻", "max-tokens": "达输出上限", interrupted: "中断",
-			disposed: "会话已关闭", unknown: "结果未知",
+		var END_KEYS = {
+			completed: "end.completed", error: "end.error", aborted: "end.aborted",
+			blocked: "end.blocked", "max-tokens": "end.maxTokens", interrupted: "end.interrupted",
+			disposed: "end.disposed", unknown: "end.unknown",
 		};
-		function endLabel(r) { return END_LABELS[r] || "结果未知"; }
+		function endLabel(r) { return t(END_KEYS[r] || "end.unknown"); }
 		// 只有明确的 completed 才算成功：空 endReason（会话被关闭/agent 销毁）曾被判成功，属假阳性
 		function isSuccessEnd(r) { return r === "completed"; }
 
@@ -218,9 +735,9 @@ window.__ModuleLoader__.load({
 		function fmtDur(ms) {
 			var s = Math.max(0, Math.round((ms || 0) / 1000));
 			var hh = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-			if (hh > 0) return hh + "小时" + m + "分" + sec + "秒";
-			if (m > 0) return m + "分" + sec + "秒";
-			return sec + "秒";
+			if (hh > 0) return hh + t("unit.hour") + m + t("unit.minute") + sec + t("unit.second");
+			if (m > 0) return m + t("unit.minute") + sec + t("unit.second");
+			return sec + t("unit.second");
 		}
 		function truncate(str, max) {
 			if (!str) return "";
@@ -286,10 +803,10 @@ window.__ModuleLoader__.load({
 				}
 				// 开关未开时明确警示「仅权限链路」，避免假阳性（undefined 视为旧调用，不提示）
 				var warn = switchOn === false;
-				new Notification(warn ? "⚠️ dsh-task-capsule 测试通知（仅权限链路）" : "✅ dsh-task-capsule 测试通知", {
+				new Notification(warn ? t("notify.testTitleWarn") : t("notify.testTitle"), {
 					body: warn
-						? "通知权限正常，但「浏览器系统通知」开关未开：任务结束时不会推送系统通知，请到设置里打开开关。"
-						: "系统通知链路已打通：任务完成 / 等待确认时会在系统通知中心提醒。",
+						? t("notify.testBodyDisabled")
+						: t("notify.testBodyOk"),
 					tag: "dsh-task-capsule-test",
 				});
 			} catch (e) { /* ignore */ }
@@ -448,7 +965,7 @@ window.__ModuleLoader__.load({
 					onClick: function () { pick(t.sessionId); },
 				},
 					h("span", { className: "dot", style: { background: isAct ? phaseColor(t.phase) : (isSuccessEnd(t.endReason) ? "var(--pl-ok)" : "var(--pl-err)") } }),
-					h("span", { className: "t" }, t.title || "(无标题)"),
+					h("span", { className: "t" }, t.title || t("common.untitled")),
 					h("span", { className: "m" }, isAct ? phaseLabel(t.phase) + " " + fmtClock((t.elapsed || 0) + Math.max(0, Date.now() - (lastSnapAt || Date.now()))) : endLabel(t.endReason) + " " + fmtDur(t.duration)));
 			});
 		}
@@ -498,24 +1015,24 @@ window.__ModuleLoader__.load({
 			if (waiting > 0) {
 				cls += " plp-wait";
 				var parts = [];
-				if (approvals > 0) parts.push(approvals + " 待确认");
-				if (asks > 0) parts.push(asks + " 待选择");
-				txt = "✋ " + parts.join(" · ") + (active.length > 1 ? " · " + active.length + " 任务" : "");
-				title = active.length === 1 ? "点击跳转等待确认的会话" : "点击展开任务列表";
+				if (approvals > 0) parts.push(approvals + t("capsule.approvalsSuffix"));
+				if (asks > 0) parts.push(asks + t("capsule.asksSuffix"));
+				txt = "✋ " + parts.join(" · ") + (active.length > 1 ? " · " + active.length + t("capsule.tasksSuffix") : "");
+				title = active.length === 1 ? t("capsule.titleSingleConfirm") : t("capsule.titleExpand");
 			} else if (active.length > 0) {
 				cls += " plp-run";
 				var newest = active.slice().sort(function (a, b) { return b.startTime - a.startTime; })[0];
 				var drift = st && st.now ? (Date.now() - st.now) : 0;
 				var elapsed = active.reduce(function (m, t) { return Math.max(m, (t.elapsed || 0) + drift); }, 0);
-				txt = active.length + " 个任务 · " + fmtClock(elapsed);
+				txt = active.length + t("capsule.activeCount") + fmtClock(elapsed);
 				dotColor = phaseColor(newest.phase);
-				title = (active.length === 1 ? "点击跳转对应会话" : "点击展开任务列表") + " · " + phaseLabel(newest.phase);
+				title = (active.length === 1 ? t("capsule.titleJump") : t("capsule.titleExpand")) + " · " + phaseLabel(newest.phase);
 			} else {
 				// 空闲占位：头部位置稳定，明确「当前无任务」；点击仍可翻最近完成
 				cls += " plp-idle";
 				var unread = (st.stats && st.stats.unread) || 0;
-				txt = unread > 0 ? "空闲 · " + unread + " 条未读" : "空闲 · 无任务";
-				title = unread > 0 ? "空闲 · " + unread + " 条未读，点击展开" : (recent.length > 0 ? "空闲 · 点击展开最近完成" : "暂无任务记录");
+				txt = unread > 0 ? t("capsule.idlePrefix") + unread + t("capsule.unreadSuffix") : t("capsule.idleNoTasks");
+				title = unread > 0 ? t("capsule.idlePrefix") + unread + t("capsule.titleUnread") : (recent.length > 0 ? t("capsule.idleRecent") : t("capsule.empty"));
 			}
 
 			function handleClick() {
@@ -534,7 +1051,7 @@ window.__ModuleLoader__.load({
 					className: cls,
 					onClick: handleClick,
 					title: title,
-					"aria-label": (txt ? txt + "。" : "") + title,
+					"aria-label": (txt ? txt + t("common.period") : "") + title,
 					// 单任务时点击直接跳会话、不弹菜单：声明 haspopup 会让读屏语义出错
 					"aria-haspopup": active.length === 1 ? undefined : "true",
 					"aria-expanded": active.length === 1 ? undefined : popOpen,
@@ -542,10 +1059,10 @@ window.__ModuleLoader__.load({
 					h("span", { className: "plp-dot", style: dotColor ? { background: dotColor } : null }),
 					txt ? h("span", { className: "plp-txt" }, txt) : null),
 				popOpen ? h("div", { ref: popRef, className: "plp-pop", role: "menu" },
-					h("div", { className: "plp-pop-head" }, active.length > 0 ? "进行中任务 · 点击跳转" : "最近完成 · 点击跳转"),
+					h("div", { className: "plp-pop-head" }, active.length > 0 ? t("pop.activeHead") : t("pop.recentHead")),
 					(active.length + recent.length) > 0
 						? taskListNodes(active, recent, function (sid) { setPopOpen(false); openSession(sid); })
-						: h("div", { className: "plp-pop-head" }, "暂无任务记录")) : null);
+						: h("div", { className: "plp-pop-head" }, t("capsule.empty"))) : null);
 		}
 		//#endregion
 
@@ -582,6 +1099,8 @@ window.__ModuleLoader__.load({
 				}
 
 				var pending = [];
+				// 因为「正盯着屏幕」被压掉的完成记录：只在显式开启 soundForeground 时补一声
+				var suppressed = [];
 				for (var r of (st.recent || [])) {
 					var key = r.sessionId + ":" + r.endTime;
 					if (seenDone.has(key)) continue;
@@ -591,12 +1110,12 @@ window.__ModuleLoader__.load({
 					if (ok ? cfg.notifyOnComplete === false : cfg.notifyOnError === false) continue;
 					// 眼前正在看的不打扰；超过 FRESH_MS 才当"离开期间攒下的"
 					var age = Date.now() - (Number(r.endTime) || 0);
-					if (watching && age < FRESH_MS) continue;
+					if (watching && age < FRESH_MS) { suppressed.push({ ok: ok }); continue; }
 					pending.push({
 						id: key,
 						kind: ok ? "done" : "error",
 						ok: ok,
-						title: (ok ? "✅ 完成：" : "❌ " + endLabel(r.endReason) + "：") + (r.title || "(无标题)"),
+						title: (ok ? t("toast.donePrefix") : "❌ " + endLabel(r.endReason) + t("common.colon")) + (r.title || t("common.untitled")),
 						meta: fmtDur(r.duration) + (r.errorMessage ? " · " + truncate(r.errorMessage, 60) : ""),
 						sessionId: r.sessionId,
 						endReason: r.endReason,
@@ -608,14 +1127,14 @@ window.__ModuleLoader__.load({
 				if (cfg.leaderOnlyCards === true && !leader) pending.length = 0;
 
 				var added = [];
-				// 多条积压合并成一张：闸门放开后不该被五个"完成"糊脸
+				// 多条积压合并成一张：闸门放开后不该被五个t("end.completed")糊脸
 				if (pending.length >= 2) {
 					var badCount = pending.reduce(function (n, x) { return n + (x.ok ? 0 : 1); }, 0);
 					added.push({
 						id: "batch:" + pending[pending.length - 1].id + ":" + pending.length,
 						kind: badCount > 0 ? "error" : "done",
-						title: "🔔 " + pending.length + " 个任务已结束" + (badCount > 0 ? "（" + badCount + " 个异常）" : "（全部完成）"),
-						meta: "最长 " + fmtDur(Math.max.apply(null, pending.map(function (x) { return x.duration || 0; }))) + "｜详情见胶囊下拉",
+						title: "🔔 " + pending.length + t("toast.finishedCount") + (badCount > 0 ? t("common.openParen") + badCount + t("toast.badSuffix") : t("toast.allDone")),
+						meta: t("toast.longest") + fmtDur(Math.max.apply(null, pending.map(function (x) { return x.duration || 0; }))) + t("toast.detailsHint"),
 						sessionId: pending[0].sessionId,
 					});
 				} else if (pending.length === 1) {
@@ -631,11 +1150,11 @@ window.__ModuleLoader__.load({
 							if (seenAsk.has(qkey)) continue;
 							seenAsk.add(qkey);
 							askCount++;
-							var qHead = q.header || (q.count > 1 ? q.count + " 个问题" : "选项");
+							var qHead = q.header || (q.count > 1 ? q.count + t("ask.questions") : t("ask.options"));
 							added.push({
 								id: qkey,
 								kind: "ask",
-								title: "❓ 等待选择：" + qHead + (q.optionCount > 0 ? "（" + q.optionCount + " 个选项）" : ""),
+								title: t("ask.waitingTitle") + qHead + (q.optionCount > 0 ? t("common.openParen") + q.optionCount + t("ask.optionCount") : ""),
 								meta: truncate(q.text || "", 100),
 								sessionId: ta.sessionId,
 							});
@@ -652,7 +1171,7 @@ window.__ModuleLoader__.load({
 							added.push({
 								id: akey,
 								kind: "confirm",
-								title: "✋ 等待确认：" + (a.toolName || "工具"),
+								title: t("confirm.waitingTitle") + (a.toolName || t("confirm.toolFallback")),
 								meta: truncate(a.reason || t.title || "", 80),
 								sessionId: t.sessionId,
 							});
@@ -677,13 +1196,17 @@ window.__ModuleLoader__.load({
 						if (confirmCount + askCount > 0) playSound("ding", "ok");
 						else playSound(cfg.soundEffect, pending.length > 0 && !pending[0].ok ? "error" : "ok");
 					}
+					// 前台提示音：卡片仍然不弹（不打扰视觉），但按设置补一声
+					if (added.length === 0 && suppressed.length > 0 && leader && cfg.soundNotify !== false && cfg.soundForeground === true) {
+						playSound(cfg.soundEffect, suppressed[0].ok ? "ok" : "error");
+					}
 					if (leader && cfg.systemNotify && (cfg.systemNotifyAlways || !watching)) {
 						var head = confirmCount + askCount > 0
-							? (askCount > 0 ? "❓ dsh 等你选择" : "✋ dsh 任务等待确认")
-							: (pending.length >= 2 ? "🔔 " + pending.length + " 个任务已结束"
-								: (pending.length === 1 ? (pending[0].ok ? "✅ dsh 任务完成" : "❌ dsh 任务" + endLabel(pending[0].endReason)) : ""));
-						var body = askCount > 0 ? (askCount + " 组选项在等你拍板")
-							: (confirmCount > 0 ? (confirmCount + " 个工具在等确认") : (pending.length > 0 ? (pending[0].title || "") : ""));
+							? (askCount > 0 ? t("notify.askTitle") : t("notify.confirmTitle"))
+							: (pending.length >= 2 ? "🔔 " + pending.length + t("toast.finishedCount")
+								: (pending.length === 1 ? (pending[0].ok ? t("notify.doneTitle") : t("notify.failTitle") + endLabel(pending[0].endReason)) : ""));
+						var body = askCount > 0 ? (askCount + t("notify.askBodySuffix"))
+							: (confirmCount > 0 ? (confirmCount + t("notify.confirmBodySuffix")) : (pending.length > 0 ? (pending[0].title || "") : ""));
 						if (head) systemNotify(head, body, "dsh-task-capsule-batch", pending.length > 0 ? pending[0].sessionId : "");
 					}
 				}
@@ -715,13 +1238,13 @@ window.__ModuleLoader__.load({
 						h("button", {
 							type: "button",
 							className: "pln-go",
-							"aria-label": "前往对应会话",
+							"aria-label": t("toast.actionLabel"),
 							onClick: function () { dismiss(t.id); openSession(t.sessionId); },
-						}, "前往会话 →")),
+						}, t("toast.action"))),
 					h("button", {
 						type: "button",
 						className: "pln-close",
-						"aria-label": "关闭",
+						"aria-label": t("toast.close"),
 						onClick: function () { dismiss(t.id); },
 					}, "✕"));
 			}));
@@ -730,11 +1253,14 @@ window.__ModuleLoader__.load({
 		//#endregion
 
 		//#region 设置页
-		var PRESET_LIST = [
-			{ id: "quiet", label: "安静", desc: "只有工具在等你确认时才提醒；完成与出错只记未读。" },
-			{ id: "standard", label: "标准", desc: "离开窗口时提醒一次；正看着屏幕时不打扰。" },
-			{ id: "watch", label: "看护", desc: "全部提醒，系统通知常开，卡片常驻到手动关闭。" },
-		];
+		// 预设文案随语言变化，必须在渲染时取，不能在模块加载时固化
+		function presetList() {
+			return [
+				{ id: "quiet", label: t("settings.presetQuiet"), desc: t("settings.presetQuietDesc") },
+				{ id: "standard", label: t("settings.presetStandard"), desc: t("settings.presetStandardDesc") },
+				{ id: "watch", label: t("settings.presetWatch"), desc: t("settings.presetWatchDesc") },
+			];
+		}
 
 		function SwitchRow(props) {
 			return h("div", { className: "pls-row" },
@@ -755,24 +1281,24 @@ window.__ModuleLoader__.load({
 		function PermRow(props) {
 			var perm = props.perm;
 			var map = {
-				granted: { cls: "ok", label: "已授权" },
-				default: { cls: "off", label: "未请求" },
-				denied: { cls: "err", label: "已被拒绝" },
-				unsupported: { cls: "off", label: "当前环境不支持" },
+				granted: { cls: "ok", label: t("settings.permGranted") },
+				default: { cls: "off", label: t("settings.permDefault") },
+				denied: { cls: "err", label: t("settings.permDenied") },
+				unsupported: { cls: "off", label: t("settings.permUnsupported") },
 			};
 			var st = map[perm] || map.unsupported;
 			return h("div", { className: "pls-row" },
 				h("div", { className: "pls-label" },
-					h("div", null, "系统通知权限"),
+					h("div", null, t("settings.permTitle")),
 					perm === "denied" ? h("div", { className: "pls-guide" },
-						"通知权限已被系统拒绝：请在 系统设置 → 通知 → DSH Desktop 中允许通知（Windows：设置 → 系统 → 通知），改完如未生效重启 DSH。") : null,
-					perm === "default" ? h("div", { className: "pls-desc" }, "点右侧按钮弹出系统授权弹窗，允许后自动发送测试通知") : null),
+						t("settings.permDeniedGuide")) : null,
+					perm === "default" ? h("div", { className: "pls-desc" }, t("settings.permGuide")) : null),
 				h("span", { className: "pls-badge " + st.cls }, st.label),
 				(perm === "granted" || perm === "default") ? h("button", {
 					type: "button",
 					className: "pls-btn",
 					onClick: props.onTest,
-				}, perm === "granted" ? "发测试通知" : "请求授权并测试") : null);
+				}, perm === "granted" ? t("settings.permTest") : t("settings.permRequest")) : null);
 		}
 
 		function CapsuleSettings() {
@@ -792,15 +1318,15 @@ window.__ModuleLoader__.load({
 					console.error("[dsh-task-capsule] save notify config failed:", e && e.message);
 				});
 			}
-			if (!cfg) return h("div", { className: "pls-root" }, h("div", { className: "pls-intro" }, "正在读取通知配置…"));
+			if (!cfg) return h("div", { className: "pls-root" }, h("div", { className: "pls-intro" }, t("settings.loading")));
 			return h("div", { className: "pls-root" },
 				h("div", { className: "pls-intro" },
-					"会话 header 任务胶囊、完成/出错/等待时的提醒卡、按天记账的任务账本。"),
+					t("settings.intro1")),
 				h("div", { className: "pls-intro" },
-					"提醒只在你不在窗口前时发出；token 统计交给 DSH 自带会话统计条。"),
+					t("settings.intro2")),
 				h("div", { className: "pls-card" },
-					h("div", { className: "pls-h" }, "提醒强度"),
-					h("div", { className: "pls-seg" }, PRESET_LIST.map(function (p) {
+					h("div", { className: "pls-h" }, t("settings.sectionIntensity")),
+					h("div", { className: "pls-seg" }, presetList().map(function (p) {
 						return h("button", {
 							type: "button",
 							key: p.id,
@@ -809,48 +1335,60 @@ window.__ModuleLoader__.load({
 							onClick: function () { patch({ preset: p.id }); },
 						}, p.label);
 					})),
-					h("div", { className: "pls-desc", style: { marginTop: "8px" } }, (PRESET_LIST.filter(function (p) { return p.id === cfg.preset; })[0] || PRESET_LIST[1]).desc)),
+					h("div", { className: "pls-desc", style: { marginTop: "8px" } }, (presetList().filter(function (p) { return p.id === cfg.preset; })[0] || presetList()[1]).desc)),
 				h("div", { className: "pls-card" },
-					h("div", { className: "pls-h" }, "提醒什么"),
+					h("div", { className: "pls-h" }, t("settings.sectionWhat")),
 					h(SwitchRow, {
-						label: "完成通知", desc: "任务正常结束时弹卡片",
+						label: t("settings.notifyDone"), desc: t("settings.notifyDoneDesc"),
 						on: cfg.notifyOnComplete !== false,
 						onToggle: function () { patch({ notifyOnComplete: cfg.notifyOnComplete === false }); },
 					}),
 					h(SwitchRow, {
-						label: "异常通知", desc: "任务出错 / 中止 / 受阻时弹卡片",
+						label: t("settings.notifyError"), desc: t("settings.notifyErrorDesc"),
 						on: cfg.notifyOnError !== false,
 						onToggle: function () { patch({ notifyOnError: cfg.notifyOnError === false }); },
 					}),
 					h(SwitchRow, {
-						label: "需确认通知", desc: "工具等待批准时提醒",
+						label: t("settings.notifyConfirm"), desc: t("settings.notifyConfirmDesc"),
 						on: cfg.notifyOnConfirm !== false,
 						onToggle: function () { patch({ notifyOnConfirm: cfg.notifyOnConfirm === false }); },
 					}),
 					h(SwitchRow, {
-						label: "选项提醒", desc: "DSH 弹选项选择（ask_user_question）等你拍板时提醒；不选它回合就一直停着",
+						label: t("settings.notifyAsk"), desc: t("settings.notifyAskDesc"),
 						on: cfg.notifyOnAsk !== false,
 						onToggle: function () { patch({ notifyOnAsk: cfg.notifyOnAsk === false }); },
 					})),
 				h("div", { className: "pls-card" },
-					h("div", { className: "pls-h" }, "怎么提醒"),
+					h("div", { className: "pls-h" }, t("settings.sectionHow")),
 					h(SwitchRow, {
-						label: "提示音", desc: "WebAudio 合成，无音频文件；等待确认与选项固定单音",
+						label: t("settings.sound"), desc: t("settings.soundDesc"),
 						on: cfg.soundNotify !== false,
 						onToggle: function () { patch({ soundNotify: cfg.soundNotify === false }); },
 					}),
 					h("div", { className: "pls-row" },
-						h("div", { className: "pls-label" }, h("div", null, "完成提示音音效")),
+						h("div", { className: "pls-label" }, h("div", null, t("settings.soundEffect"))),
 						h("select", {
 							className: "pls-sel",
-							"aria-label": "完成提示音音效",
+							"aria-label": t("settings.soundEffect"),
 							value: cfg.soundEffect || "chime",
 							onChange: function (e) { patch({ soundEffect: e.target.value }); },
 						},
-							h("option", { value: "chime" }, "chime（双音）"),
-							h("option", { value: "ding" }, "ding（单音）"))),
+							h("option", { value: "chime" }, t("settings.soundChime")),
+							h("option", { value: "ding" }, t("settings.soundDing")))),
+					cfg.soundNotify !== false ? h(SwitchRow, {
+						label: t("settings.soundForeground"), desc: t("settings.soundForegroundDesc"),
+						on: cfg.soundForeground === true,
+						onToggle: function () { patch({ soundForeground: !(cfg.soundForeground === true) }); },
+					}) : null,
+					h("div", { className: "pls-row" },
+						h("div", { className: "pls-label" }, h("div", null, t("settings.soundTest"))),
+						h("button", {
+							type: "button",
+							className: "pls-btn",
+							onClick: function () { playSound(cfg.soundEffect || "chime", "ok"); },
+						}, t("settings.soundTestAction"))),
 					h(SwitchRow, {
-						label: "浏览器系统通知", desc: "Electron 客户端内为系统级通知（macOS 通知中心 / Windows Toast）",
+						label: t("settings.systemNotify"), desc: t("settings.systemNotifyDesc"),
 						on: !!cfg.systemNotify,
 						onToggle: function () {
 							var next = !cfg.systemNotify;
@@ -862,29 +1400,29 @@ window.__ModuleLoader__.load({
 						},
 					}),
 					cfg.systemNotify ? h(SwitchRow, {
-						label: "前台时也推系统通知", desc: "默认仅页面在后台时推送；开启后任务结束/等待确认时不分前后台都推",
+						label: t("settings.foreground"), desc: t("settings.foregroundDesc"),
 						on: !!cfg.systemNotifyAlways,
 						onToggle: function () { patch({ systemNotifyAlways: !cfg.systemNotifyAlways }); },
 					}) : null,
 					h(PermRow, { perm: perm, onTest: function () { sendTestNotify(cfg.systemNotify !== false); } }),
 					h(SwitchRow, {
-						label: "完成卡只弹主窗口", desc: "多窗口时，完成/出错的页内卡片只由主窗口弹出（待确认、待选择不受影响）",
+						label: t("settings.mainWindowOnly"), desc: t("settings.mainWindowOnlyDesc"),
 						on: cfg.leaderOnlyCards === true,
 						onToggle: function () { patch({ leaderOnlyCards: !(cfg.leaderOnlyCards === true) }); },
 					}),
 					h("div", { className: "pls-row" },
-						h("div", { className: "pls-label" }, h("div", null, "卡片停留时长")),
+						h("div", { className: "pls-label" }, h("div", null, t("settings.cardDuration"))),
 						h("select", {
 							className: "pls-sel",
-							"aria-label": "卡片停留时长",
+							"aria-label": t("settings.cardDuration"),
 							value: String(Number.isFinite(cfg.notifyStayMs) ? cfg.notifyStayMs : 8000),
 							onChange: function (e) { patch({ notifyStayMs: Number(e.target.value) }); },
 						},
-							h("option", { value: "5000" }, "5 秒"),
-							h("option", { value: "8000" }, "8 秒"),
-							h("option", { value: "15000" }, "15 秒"),
-							h("option", { value: "30000" }, "30 秒"),
-							h("option", { value: "0" }, "常驻直到手动关闭")))),
+							h("option", { value: "5000" }, t("settings.duration5s")),
+							h("option", { value: "8000" }, t("settings.duration8s")),
+							h("option", { value: "15000" }, t("settings.duration15s")),
+							h("option", { value: "30000" }, t("settings.duration30s")),
+							h("option", { value: "0" }, t("settings.durationPersistent"))))),
 				h(LedgerPanel, null));
 		}
 		// 账本面板：今日汇总 + 最近记录 + 详情 + 复制摘要，挂在设置区里（不新开页面，守住一寸地）
@@ -899,10 +1437,12 @@ window.__ModuleLoader__.load({
 		}
 
 		function dayLabel(offset) {
-			if (offset === 0) return "今天";
-			if (offset === 1) return "昨天";
+			if (offset === 0) return t("ledger.today");
+			if (offset === 1) return t("ledger.yesterday");
 			var d = new Date(dayStartAt(offset));
-			return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+			// 葡语按「日/月」，中文与英语按「月/日」
+			if (activeLocale === "pt") return d.getDate() + "/" + (d.getMonth() + 1);
+			return (d.getMonth() + 1) + t("ledger.monthSuffix") + d.getDate() + t("ledger.daySuffix");
 		}
 
 		function ledgerCsv(records) {
@@ -938,11 +1478,11 @@ window.__ModuleLoader__.load({
 		}
 
 		function summarizeLine(s) {
-			if (!s || !s.count) return "今天还没有完成任务。";
-			var parts = ["今天 " + s.count + " 个任务", "共 " + fmtDur(s.durationMs)];
-			if (s.approvalWaitMs > 0) parts.push("等你确认 " + fmtDur(s.approvalWaitMs));
-			if (s.failures > 0) parts.push(s.failures + " 个没跑成");
-			if (s.interrupted > 0) parts.push(s.interrupted + " 个中断" + (s.recovered > 0 ? "（含 " + s.recovered + " 个重启恢复）" : ""));
+			if (!s || !s.count) return t("ledger.emptyTodaySummary");
+			var parts = [t("ledger.summaryPrefix") + s.count + t("ledger.summaryTasks"), t("ledger.summaryTotal") + fmtDur(s.durationMs)];
+			if (s.approvalWaitMs > 0) parts.push(t("ledger.summaryApprovalWait") + fmtDur(s.approvalWaitMs));
+			if (s.failures > 0) parts.push(s.failures + t("ledger.summaryFailed"));
+			if (s.interrupted > 0) parts.push(s.interrupted + t("ledger.summaryInterrupted") + (s.recovered > 0 ? t("ledger.summaryRecoveredOpen") + s.recovered + t("ledger.summaryRecoveredClose") : ""));
 			return parts.join(" · ");
 		}
 
@@ -1008,12 +1548,12 @@ window.__ModuleLoader__.load({
 
 			function copy(r) {
 				var text = [
-					r.title || "(无标题)",
+					r.title || t("common.untitled"),
 					endLabel(r.endReason),
 					fmtDur(r.duration),
-					(r.steps || 0) + " 步 / " + (r.toolCalls || 0) + " 次工具",
-					r.approvalWaitMs ? "审批等待 " + fmtDur(r.approvalWaitMs) : "",
-				].filter(Boolean).join("｜");
+					(r.steps || 0) + t("ledger.rowSteps") + (r.toolCalls || 0) + t("ledger.rowTools"),
+					r.approvalWaitMs ? t("ledger.rowApprovalWait") + fmtDur(r.approvalWaitMs) : "",
+				].filter(Boolean).join(t("common.pipe"));
 				try {
 					if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
 					else {
@@ -1033,25 +1573,25 @@ window.__ModuleLoader__.load({
 			var sum = today;
 			var chips = [];
 			if (sum && sum.count > 0) {
-				chips.push({ t: sum.count + " 个任务", c: "acc" });
+				chips.push({ t: sum.count + t("ledger.summaryTasks"), c: "acc" });
 				if (sum.durationMs > 0) chips.push({ t: fmtDur(sum.durationMs), c: "" });
-				if (sum.approvalWaitMs > 0) chips.push({ t: "等确认 " + fmtDur(sum.approvalWaitMs), c: "warn" });
-				if (sum.failures > 0) chips.push({ t: "失败 " + sum.failures, c: "bad" });
-				if (sum.interrupted > 0) chips.push({ t: "中断 " + sum.interrupted, c: "" });
+				if (sum.approvalWaitMs > 0) chips.push({ t: t("ledger.chipConfirm") + fmtDur(sum.approvalWaitMs), c: "warn" });
+				if (sum.failures > 0) chips.push({ t: t("ledger.chipFail") + sum.failures, c: "bad" });
+				if (sum.interrupted > 0) chips.push({ t: t("ledger.chipInterrupted") + sum.interrupted, c: "" });
 			}
 
 			var body = null;
 			if (open && view.error) {
 				body = h("div", { className: "pls-desc" },
-					"读取失败：" + view.error + " ",
-					h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, 0); } }, "重试"));
+					t("ledger.readFailed") + view.error + " ",
+					h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, 0); } }, t("ledger.retry")));
 			} else if (open) {
 				body = [
 					h("div", { className: "pls-daynav" },
-						h("button", { type: "button", className: "pls-btn", "aria-label": "往前一天", onClick: function () { fetchDay(view.day + 1, 0); } }, "‹"),
+						h("button", { type: "button", className: "pls-btn", "aria-label": t("ledger.prevDay"), onClick: function () { fetchDay(view.day + 1, 0); } }, "‹"),
 						h("span", { className: "plb-chip" }, dayLabel(view.day)),
 						h("button", {
-							type: "button", className: "pls-btn", "aria-label": "往后一天",
+							type: "button", className: "pls-btn", "aria-label": t("ledger.nextDay"),
 							disabled: view.day === 0,
 							onClick: function () { fetchDay(Math.max(0, view.day - 1), 0); },
 						}, "›"),
@@ -1068,19 +1608,19 @@ window.__ModuleLoader__.load({
 								onClick: function () { setOpenId(isOpen ? null : r.recordId); },
 							},
 								h("span", { className: "dot", style: { background: isSuccessEnd(r.endReason) ? "var(--pl-ok)" : (r.recovered ? "var(--pl-warn)" : "var(--pl-err)") } }),
-								h("span", { className: "t" }, (r.title || "(无标题)") + (r.recovered ? "（中断恢复）" : "")),
+								h("span", { className: "t" }, (r.title || t("common.untitled")) + (r.recovered ? t("ledger.recoveredTag") : "")),
 								h("span", { className: "m" }, fmtDur(r.duration))),
 							isOpen ? h("div", { className: "pls-entry-body" },
-								h("div", null, "结束：" + endLabel(r.endReason) + (r.errorMessage ? " · " + truncate(r.errorMessage, 80) : "")),
-								h("div", null, (r.steps || 0) + " 步 · " + (r.toolCalls || 0) + " 次工具调用" + (r.approvalCount ? " · " + r.approvalCount + " 次审批，共等 " + fmtDur(r.approvalWaitMs) : "")),
-								r.models && r.models.length ? h("div", null, "模型：" + r.models.join("、")) : null,
-								h("div", null, "开始 " + new Date(r.startTime || 0).toLocaleString() + " → 结束 " + new Date(r.endTime || 0).toLocaleString()),
-								h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? "已复制" : "复制摘要")) : null);
+								h("div", null, t("ledger.end") + endLabel(r.endReason) + (r.errorMessage ? " · " + truncate(r.errorMessage, 80) : "")),
+								h("div", null, (r.steps || 0) + t("ledger.rowStepsDot") + (r.toolCalls || 0) + t("ledger.rowToolsLong") + (r.approvalCount ? " · " + r.approvalCount + t("ledger.rowApprovals") + fmtDur(r.approvalWaitMs) : "")),
+								r.models && r.models.length ? h("div", null, t("ledger.models") + r.models.join(t("common.listSep"))) : null,
+								h("div", null, t("ledger.start") + new Date(r.startTime || 0).toLocaleString() + t("ledger.startEnd") + new Date(r.endTime || 0).toLocaleString()),
+								h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? t("ledger.copied") : t("ledger.copy"))) : null);
 					}),
-					(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, (view.day === 0 ? "今天" : dayLabel(view.day)) + "还没有记录。") : null,
+					(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, (view.day === 0 ? t("ledger.today") : dayLabel(view.day)) + t("ledger.noRecords")) : null,
 					view.records.length < view.total
 						? h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, view.records.length); } },
-							view.loading ? "正在读取…" : "加载更多（还有 " + (view.total - view.records.length) + " 条）")
+							view.loading ? t("ledger.loading") : t("ledger.loadMore") + (view.total - view.records.length) + t("ledger.loadMoreClose"))
 						: null,
 				];
 			}
@@ -1096,10 +1636,10 @@ window.__ModuleLoader__.load({
 						if (next && view.day === 0 && view.records.length === 0 && !view.loading) fetchDay(0, 0);
 					},
 				},
-					h("span", { className: "plb-title" }, "任务账本"),
-					chips.length === 0 ? h("span", { className: "plb-sub" }, view.loading ? "读取中…" : "今天还没有记录") : null,
+					h("span", { className: "plb-title" }, t("ledger.title")),
+					chips.length === 0 ? h("span", { className: "plb-sub" }, view.loading ? t("ledger.reading") : t("ledger.emptyToday")) : null,
 					h("span", { style: { flex: "1" } }),
-					h("span", { className: "plb-arrow", "aria-hidden": "true" }, open ? "▾ 收起" : "▸ 展开")),
+					h("span", { className: "plb-arrow", "aria-hidden": "true" }, open ? t("ledger.collapse") : t("ledger.expand"))),
 				chips.length > 0 ? h("div", { className: "plb-chips" },
 					chips.map(function (c2, i) {
 						return h("span", { key: i, className: "plb-chip" + (c2.c ? " plb-chip-" + c2.c : "") }, c2.t);
@@ -1114,27 +1654,43 @@ window.__ModuleLoader__.load({
 		function apply(ctx) {
 			ctxRef.current = ctx;
 			ensureCss();
+			// 语言：locale 是可选服务，拿不到就保持 zh（与旧版行为一致）
+			var localeSvc = typeof ctx.get === "function" ? ctx.get("locale") : undefined;
+			if (localeSvc && typeof localeSvc.getLocale === "function") {
+				try { activeLocale = resolveLocaleTag(localeSvc.getLocale().active); } catch (e) { /* 快照不可读就留在兜底语言 */ }
+				if (typeof localeSvc.subscribe === "function") {
+					ctx.effect(function () {
+						return localeSvc.subscribe(function () {
+							var next = resolveLocaleTag(localeSvc.getLocale().active);
+							if (next === activeLocale) return;
+							activeLocale = next;
+							// 三块 UI 共用同一个 store：emit 一次即整页换语言
+							capsuleStore.emit();
+						});
+					}, "dsh-task-capsule: locale");
+				}
+			}
 			// runstate 全局轮询（胶囊/侧栏入口共享）；插件卸载时停止
 			ctx.effect(function () { return startRunPolling(); }, "dsh-task-capsule: runstate polling");
 			var slots = ctx.get("slots");
 			if (slots === undefined) {
-				console.error("[dsh-task-capsule] 宿主未提供 slots 服务（版本不兼容？）——胶囊与通知不可用，仅设置页保留");
+				console.error(t("error.noSlots"));
 				return;
 			}
 
 			// 任务胶囊：in-flow 挂会话 header 右侧 utilities 行（chrome 行，不遮消息区）
 			slots.inject(PLATFORM.slots.capsule, function () { return slots.register(
-				{ name: PLATFORM.slots.capsule, id: "dsh-task-capsule-capsule", order: 5, label: "dsh-task-capsule 任务胶囊" },
+				{ name: PLATFORM.slots.capsule, id: "dsh-task-capsule-capsule", order: 5, label: t("slot.capsuleLabel") },
 				function () { return h(Capsule, null); }); });
 
 			// 通知卡栈：全局浮层
 			slots.inject(PLATFORM.slots.overlay, function () { return slots.register(
-				{ name: PLATFORM.slots.overlay, id: "dsh-task-capsule-overlay", order: 31, label: "dsh-task-capsule 通知卡栈" },
+				{ name: PLATFORM.slots.overlay, id: "dsh-task-capsule-overlay", order: 31, label: t("slot.overlayLabel") },
 				function () { return h(ToastStack, null); }); });
 
 			// 设置页：通知行为配置
 			slots.inject(PLATFORM.slots.settings, function () { return slots.register(
-				{ name: PLATFORM.slots.settings, id: "dsh-task-capsule", order: 91, label: "任务胶囊" },
+				{ name: PLATFORM.slots.settings, id: "dsh-task-capsule", order: 91, label: t("slot.settingsLabel") },
 				function () { return h(CapsuleSettings, null); }); });
 		}
 
