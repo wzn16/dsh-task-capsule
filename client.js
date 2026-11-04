@@ -1525,6 +1525,8 @@ window.__ModuleLoader__.load({
 				}, "dsh-task-capsule: locale");
 			}
 
+			// runstate 全局轮询（胶囊/侧栏入口共享）；插件卸载时停止
+			ctx.effect(function () { return startRunPolling(); }, "dsh-task-capsule: runstate polling");
 			var slots = ctx.get("slots");
 			if (slots === undefined) {
 				console.error(tr("error.noSlots"));
