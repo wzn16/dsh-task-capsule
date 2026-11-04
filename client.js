@@ -1466,24 +1466,65 @@ window.__ModuleLoader__.load({
 		function apply(ctx) {
 			ctxRef.current = ctx;
 			ensureCss();
-			// 语言：locale 是可选服务，拿不到就保持 zh（与旧版行为一致）
-			var localeSvc = typeof ctx.get === "function" ? ctx.get("locale") : undefined;
-			if (localeSvc && typeof localeSvc.getLocale === "function") {
-				try { activeLocale = resolveLocaleTag(localeSvc.getLocale().active); } catch (e) { /* 快照不可读就留在兜底语言 */ }
-				if (typeof localeSvc.subscribe === "function") {
-					ctx.effect(function () {
-						return localeSvc.subscribe(function () {
-							var next = resolveLocaleTag(localeSvc.getLocale().active);
-							if (next === activeLocale) return;
-							activeLocale = next;
-							// 三块 UI 共用同一个 store：emit 一次即整页换语言
-							capsuleStore.emit();
-						});
-					}, "dsh-task-capsule: locale");
-				}
+			// 语言：locale 是可选服务，可能比本插件晚挂载。先按浏览器语言兜底，
+			// 服务一出现就接管；两处都拿不到才留在 zh（与旧版 DSH 的行为一致）。
+			var localeSvc = null;
+			var releaseLocale = null;
+
+			function readLocale() {
+				if (!localeSvc) return null;
+				try {
+					var snap = localeSvc.getLocale();
+					return snap ? resolveLocaleTag(snap.active) : null;
+				} catch (e) { return null; }
 			}
-			// runstate 全局轮询（胶囊/侧栏入口共享）；插件卸载时停止
-			ctx.effect(function () { return startRunPolling(); }, "dsh-task-capsule: runstate polling");
+
+			function browserLocale() {
+				try {
+					if (typeof document !== "undefined" && document.documentElement && document.documentElement.lang) {
+						return resolveLocaleTag(document.documentElement.lang);
+					}
+					if (typeof navigator !== "undefined" && navigator.language) return resolveLocaleTag(navigator.language);
+				} catch (e) { /* 读不到就回 zh */ }
+				return FALLBACK_LOCALE;
+			}
+
+			function applyLocale(next) {
+				if (!next || next === activeLocale) return;
+				activeLocale = next;
+				// 三块 UI 共用同一个 store：emit 一次即整页换语言
+				capsuleStore.emit();
+			}
+
+			function attachLocale() {
+				var svc = typeof ctx.get === "function" ? ctx.get("locale") : undefined;
+				if (!svc || typeof svc.getLocale !== "function") return false;
+				localeSvc = svc;
+				applyLocale(readLocale() || browserLocale());
+				if (typeof svc.subscribe === "function" && !releaseLocale) {
+					releaseLocale = svc.subscribe(function () {
+						applyLocale(readLocale() || browserLocale());
+					});
+				}
+				return true;
+			}
+
+			applyLocale(browserLocale());
+			if (!attachLocale()) {
+				var localeTries = 0;
+				var localeTimer = setInterval(function () {
+					localeTries++;
+					if (attachLocale() || localeTries >= 40) clearInterval(localeTimer);
+				}, 250);
+				ctx.effect(function () {
+					return function () { clearInterval(localeTimer); if (releaseLocale) releaseLocale(); };
+				}, "dsh-task-capsule: locale");
+			} else {
+				ctx.effect(function () {
+					return function () { if (releaseLocale) releaseLocale(); };
+				}, "dsh-task-capsule: locale");
+			}
+
 			var slots = ctx.get("slots");
 			if (slots === undefined) {
 				console.error(tr("error.noSlots"));
