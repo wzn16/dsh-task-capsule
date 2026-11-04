@@ -11,7 +11,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const LOCALES = ['zh', 'en', 'pt']
+const LOCALES = ['zh', 'en']
 const START = '/* locale-messages:start */'
 const END = '/* locale-messages:end */'
 const CLIENT = path.join(ROOT, 'client.js')

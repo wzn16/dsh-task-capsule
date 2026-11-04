@@ -78,7 +78,6 @@ grep -n '"dsh-task-capsule"' package.json
 | 选项提醒 | 开 | DSH 弹选项选择（`ask_user_question`）等你拍板时提醒 |
 | 提示音 | 开 | WebAudio 合成，无音频文件；等待确认与选项固定单音 |
 | 完成提示音音效 | chime | chime（双音）/ ding（单音） |
-| 前台时也提示音 | 关 | 默认只在离开窗口时响；开启后任务结束/等待确认时，看不看屏幕都响（卡片仍不弹） |
 | 浏览器系统通知 | 关 | Electron 内为系统级通知（macOS 通知中心 / Windows Toast） |
 | 前台时也推系统通知 | 关 | 默认仅后台推送；开启后不分前后台 |
 | 完成卡只弹主窗口 | 关 | 多窗口时完成/出错卡只由主窗口弹出（待确认、待选择不受影响） |
@@ -131,7 +130,7 @@ curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
 
 ## 界面语言
 
-默认中文，跟随 DSH 客户端语言自动切换：`zh` / `en` / `pt`（`pt-BR` 也认，回退到 `pt`）。语言由可选的 `locale` 服务决定，服务缺失、语言未知或词条缺失时一律回落到中文——旧版 DSH 上行为与之前完全一致。
+默认中文，跟随 DSH 客户端语言自动切换：`zh` / `en`。语言由可选的 `locale` 服务决定，服务缺失、语言未知或词条缺失时一律回落到中文——旧版 DSH 上行为与之前完全一致。
 
 词条源码是 `locale/<lang>.json`（键集三份必须一致），`client.js` 里 `/* locale-messages:start */` 与 `end` 之间那段是生成出来的，别手改：
 
@@ -141,6 +140,8 @@ node scripts/gen-locale.mjs --check    # 只校验是否同步（提交前跑）
 ```
 
 加一门语言：复制 `locale/en.json` 改名、翻完，在 `scripts/gen-locale.mjs` 的 `LOCALES` 里加一行，再跑一次上面第一条。运行时没有构建链，内联的就是字典本身。
+
+本仓库只内置 `zh` / `en`：`locale` 的可用语言由 DSH 客户端目录决定，插件不自行 `addLanguage()` 注册新语言，所以再做语言包请走独立插件（`addLanguage({ id, label, fallback: 'en' })` + 自带字典）。
 
 ## 开发
 

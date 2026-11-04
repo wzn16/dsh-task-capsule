@@ -24,7 +24,6 @@ function defaultConfig() {
     systemNotifyAlways: false,
     soundNotify: true,
     soundEffect: 'chime',
-    soundForeground: false,
     migratedFromDock: false,
   }
 }
@@ -52,7 +51,7 @@ function saveOwnConfig(notify) {
 
 const CONFIG_TYPES = {
   notifyOnComplete: 'boolean', notifyOnError: 'boolean', notifyOnConfirm: 'boolean', notifyOnAsk: 'boolean', leaderOnlyCards: 'boolean',
-  systemNotify: 'boolean', systemNotifyAlways: 'boolean', soundNotify: 'boolean', soundForeground: 'boolean',
+  systemNotify: 'boolean', systemNotifyAlways: 'boolean', soundNotify: 'boolean',
   notifyStayMs: 'number', soundEffect: 'string', preset: 'string', migratedFromDock: 'boolean',
 }
 
@@ -147,7 +146,6 @@ export function setupNotify(ctx, tracker) {
             if (typeof p.systemNotify === 'boolean') cfg.systemNotify = p.systemNotify
             if (typeof p.systemNotifyAlways === 'boolean') cfg.systemNotifyAlways = p.systemNotifyAlways
             if (typeof p.soundNotify === 'boolean') cfg.soundNotify = p.soundNotify
-            if (typeof p.soundForeground === 'boolean') cfg.soundForeground = p.soundForeground
             if (typeof p.soundEffect === 'string' && SOUND_EFFECTS.includes(p.soundEffect)) cfg.soundEffect = p.soundEffect
             // 预设是既有字段的组合：切换即覆盖单项，UI 必须提示这一点
             if (typeof p.preset === 'string' && PRESET_IDS.includes(p.preset)) {

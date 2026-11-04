@@ -168,10 +168,6 @@ window.__ModuleLoader__.load({
 				"settings.soundDesc": "WebAudio 合成，无音频文件；等待确认与选项固定单音",
 				"settings.soundDing": "ding（单音）",
 				"settings.soundEffect": "完成提示音音效",
-				"settings.soundForeground": "前台时也提示音",
-				"settings.soundForegroundDesc": "默认只在离开窗口时响；开启后任务结束/等待确认时，看没看屏幕都会响",
-				"settings.soundTest": "测试提示音",
-				"settings.soundTestAction": "播放一下",
 				"settings.systemNotify": "浏览器系统通知",
 				"settings.systemNotifyDesc": "Electron 客户端内为系统级通知（macOS 通知中心 / Windows Toast）",
 				"slot.capsuleLabel": "dsh-task-capsule 任务胶囊",
@@ -330,10 +326,6 @@ window.__ModuleLoader__.load({
 				"settings.soundDesc": "Synthesised with WebAudio, no audio files; approvals and choices always use a single tone",
 				"settings.soundDing": "ding (one tone)",
 				"settings.soundEffect": "Completion sound",
-				"settings.soundForeground": "Beep in the foreground too",
-				"settings.soundForegroundDesc": "By default it only beeps while you are away; when on, it beeps on completion/approval whether or not you are watching",
-				"settings.soundTest": "Test sound",
-				"settings.soundTestAction": "Play it",
 				"settings.systemNotify": "System notifications",
 				"settings.systemNotifyDesc": "Inside the Electron client these are system-level notifications (macOS Notification Center / Windows toast)",
 				"slot.capsuleLabel": "dsh-task-capsule · capsule",
@@ -348,168 +340,6 @@ window.__ModuleLoader__.load({
 				"toast.donePrefix": "✅ Done: ",
 				"toast.finishedCount": " tasks finished",
 				"toast.longest": "Longest: ",
-				"unit.hour": "h ",
-				"unit.minute": "m ",
-				"unit.second": "s"
-			},
-			"pt": {
-				"ask.optionCount": " opções)",
-				"ask.options": "Opções",
-				"ask.questions": " perguntas",
-				"ask.waitingTitle": "❓ À espera de escolha: ",
-				"capsule.activeCount": " tarefas · ",
-				"capsule.approvalsSuffix": " por confirmar",
-				"capsule.asksSuffix": " por escolher",
-				"capsule.empty": "Sem tarefas registadas",
-				"capsule.idleNoTasks": "Inativo · sem tarefas",
-				"capsule.idlePrefix": "Inativo · ",
-				"capsule.idleRecent": "Inativo · clique para ver as concluídas recentes",
-				"capsule.rpcTimeout": "Pedido expirou (",
-				"capsule.rpcTimeoutSuffix": "s)",
-				"capsule.tasksSuffix": " tarefas",
-				"capsule.titleExpand": "Clique para expandir a lista de tarefas",
-				"capsule.titleJump": "Clique para abrir a sessão",
-				"capsule.titleSingleConfirm": "Clique para abrir a sessão à espera de confirmação",
-				"capsule.titleUnread": " não lidas, clique para expandir",
-				"capsule.unreadSuffix": " não lidas",
-				"common.colon": ": ",
-				"common.listSep": ", ",
-				"common.openParen": " (",
-				"common.period": ". ",
-				"common.pipe": " | ",
-				"common.untitled": "(sem título)",
-				"confirm.toolFallback": "ferramenta",
-				"confirm.waitingTitle": "✋ À espera de confirmação: ",
-				"end.aborted": "Cancelado",
-				"end.blocked": "Bloqueado",
-				"end.completed": "Concluído",
-				"end.disposed": "Sessão fechada",
-				"end.error": "Erro",
-				"end.interrupted": "Interrompido",
-				"end.maxTokens": "Limite de tokens",
-				"end.unknown": "Resultado desconhecido",
-				"error.noSlots": "[dsh-task-capsule] o host não fornece o serviço slots (versão incompatível?) — o indicador e as notificações não estão disponíveis; só a página de definições fica ativa",
-				"ledger.chipConfirm": "A confirmar ",
-				"ledger.chipFail": "Falhas: ",
-				"ledger.chipInterrupted": "Interrompidas: ",
-				"ledger.collapse": "▾ Recolher",
-				"ledger.copied": "Copiado",
-				"ledger.copy": "Copiar resumo",
-				"ledger.daySuffix": "",
-				"ledger.emptyToday": "Ainda sem registos hoje",
-				"ledger.emptyTodaySummary": "Ainda não há tarefas concluídas hoje.",
-				"ledger.end": "Fim: ",
-				"ledger.expand": "▸ Expandir",
-				"ledger.loadMore": "Carregar mais (faltam ",
-				"ledger.loadMoreClose": ")",
-				"ledger.loading": "A ler…",
-				"ledger.models": "Modelo: ",
-				"ledger.monthSuffix": "/",
-				"ledger.nextDay": "Dia seguinte",
-				"ledger.noRecords": " ainda sem registos.",
-				"ledger.prevDay": "Dia anterior",
-				"ledger.readFailed": "Falha na leitura: ",
-				"ledger.reading": "A ler…",
-				"ledger.recoveredTag": " (recuperada após interrupção)",
-				"ledger.retry": "Tentar novamente",
-				"ledger.rowApprovalWait": "Espera de aprovação ",
-				"ledger.rowApprovals": " aprovações, espera total de ",
-				"ledger.rowSteps": " passos / ",
-				"ledger.rowStepsDot": " passos · ",
-				"ledger.rowTools": " chamadas de ferramentas",
-				"ledger.rowToolsLong": " chamadas de ferramentas",
-				"ledger.start": "Início ",
-				"ledger.startEnd": " → Fim ",
-				"ledger.summaryApprovalWait": "à espera de confirmação ",
-				"ledger.summaryFailed": " falhadas",
-				"ledger.summaryInterrupted": " interrompidas",
-				"ledger.summaryPrefix": "Hoje: ",
-				"ledger.summaryRecoveredClose": " recuperadas após reinício)",
-				"ledger.summaryRecoveredOpen": " (inclui ",
-				"ledger.summaryTasks": " tarefas",
-				"ledger.summaryTotal": "Total: ",
-				"ledger.title": "Registo de tarefas",
-				"ledger.today": "Hoje",
-				"ledger.yesterday": "Ontem",
-				"notify.askBodySuffix": " conjuntos de opções à sua espera",
-				"notify.askTitle": "❓ O dsh espera a sua escolha",
-				"notify.confirmBodySuffix": " ferramentas à espera de confirmação",
-				"notify.confirmTitle": "✋ Uma tarefa do dsh aguarda confirmação",
-				"notify.doneTitle": "✅ Tarefa do dsh concluída",
-				"notify.failTitle": "❌ Tarefa do dsh",
-				"notify.testBodyDisabled": "A permissão de notificações está OK, mas a opção «Notificações do sistema» está desligada: nada será enviado quando as tarefas terminarem. Ative-a nas definições.",
-				"notify.testBodyOk": "Notificações do sistema a funcionar: será avisado no centro de notificações quando uma tarefa terminar ou aguardar confirmação.",
-				"notify.testTitle": "✅ dsh-task-capsule · notificação de teste",
-				"notify.testTitleWarn": "⚠️ dsh-task-capsule · notificação de teste (apenas permissões)",
-				"phase.busy": "A trabalhar",
-				"phase.code": "A programar",
-				"phase.search": "A pesquisar",
-				"phase.think": "A pensar",
-				"phase.write": "A escrever",
-				"pop.activeHead": "Tarefas em curso · clique para abrir",
-				"pop.recentHead": "Concluídas recentemente · clique para abrir",
-				"settings.cardDuration": "Duração do cartão",
-				"settings.duration15s": "15 s",
-				"settings.duration30s": "30 s",
-				"settings.duration5s": "5 s",
-				"settings.duration8s": "8 s",
-				"settings.durationPersistent": "Fica até ser fechado",
-				"settings.foreground": "Notificar também em primeiro plano",
-				"settings.foregroundDesc": "Por omissão só notifica com a página em segundo plano; se ativar, notifica sempre que uma tarefa termina ou aguarda confirmação",
-				"settings.intro1": "Indicador de tarefas no cabeçalho da sessão, cartões de aviso em conclusão/erro/espera e um registo diário de tarefas.",
-				"settings.intro2": "Os avisos só são emitidos quando não está na janela; a contagem de tokens fica a cargo da barra de estatísticas do DSH.",
-				"settings.loading": "A ler a configuração de notificações…",
-				"settings.mainWindowOnly": "Cartão de conclusão só na janela principal",
-				"settings.mainWindowOnlyDesc": "Com várias janelas, o cartão de conclusão/erro só aparece na janela principal (confirmações e escolhas não são afetadas)",
-				"settings.notifyAsk": "Aviso de escolha",
-				"settings.notifyAskDesc": "Avisa quando o DSH pede uma escolha (ask_user_question); enquanto não escolher, o turno fica parado",
-				"settings.notifyConfirm": "Aviso de confirmação",
-				"settings.notifyConfirmDesc": "Avisa quando uma ferramenta aguarda aprovação",
-				"settings.notifyDone": "Aviso de conclusão",
-				"settings.notifyDoneDesc": "Mostra um cartão quando uma tarefa termina normalmente",
-				"settings.notifyError": "Aviso de erro",
-				"settings.notifyErrorDesc": "Mostra um cartão quando uma tarefa falha, é cancelada ou fica bloqueada",
-				"settings.permDefault": "Não pedido",
-				"settings.permDenied": "Recusado",
-				"settings.permDeniedGuide": "A permissão de notificações foi recusada pelo sistema: permita as notificações em Definições do sistema → Notificações → DSH Desktop (Windows: Definições → Sistema → Notificações). Se não ficar a funcionar, reinicie o DSH.",
-				"settings.permGranted": "Autorizado",
-				"settings.permGuide": "Clique no botão à direita para abrir o pedido de autorização do sistema; depois de permitir, é enviada uma notificação de teste.",
-				"settings.permRequest": "Pedir autorização e testar",
-				"settings.permTest": "Enviar notificação de teste",
-				"settings.permTitle": "Permissão de notificações",
-				"settings.permUnsupported": "Não suportado neste ambiente",
-				"settings.presetQuiet": "Silencioso",
-				"settings.presetQuietDesc": "Só avisa quando uma ferramenta aguarda confirmação; conclusões e erros ficam apenas como não lidos.",
-				"settings.presetStandard": "Normal",
-				"settings.presetStandardDesc": "Avisa uma vez quando sai da janela; não incomoda enquanto está a olhar para o ecrã.",
-				"settings.presetWatch": "Vigilância",
-				"settings.presetWatchDesc": "Avisa sempre, notificações do sistema sempre ligadas e o cartão fica aberto até o fechar.",
-				"settings.sectionHow": "Como avisar",
-				"settings.sectionIntensity": "Intensidade dos avisos",
-				"settings.sectionWhat": "O que avisar",
-				"settings.sound": "Som",
-				"settings.soundChime": "chime (dois tons)",
-				"settings.soundDesc": "Sintetizado com WebAudio, sem ficheiros de áudio; confirmações e escolhas usam sempre um único tom",
-				"settings.soundDing": "ding (um tom)",
-				"settings.soundEffect": "Som de conclusão",
-				"settings.soundForeground": "Som também em primeiro plano",
-				"settings.soundForegroundDesc": "Por omissão só apita quando estás fora da janela; se ativar, apita no fim da tarefa ou à espera de confirmação, estejas a ver ou não",
-				"settings.soundTest": "Testar som",
-				"settings.soundTestAction": "Tocar",
-				"settings.systemNotify": "Notificações do sistema",
-				"settings.systemNotifyDesc": "No cliente Electron são notificações do sistema (Centro de Notificações do macOS / Toast do Windows)",
-				"slot.capsuleLabel": "dsh-task-capsule · tarefas",
-				"slot.overlayLabel": "dsh-task-capsule · notificações",
-				"slot.settingsLabel": "Tarefas",
-				"toast.action": "Abrir sessão →",
-				"toast.actionLabel": "Ir para a sessão",
-				"toast.allDone": " (todas concluídas)",
-				"toast.badSuffix": " com erros)",
-				"toast.close": "Fechar",
-				"toast.detailsHint": " | detalhes na lista do indicador",
-				"toast.donePrefix": "✅ Concluído: ",
-				"toast.finishedCount": " tarefas terminaram",
-				"toast.longest": "Mais longa: ",
 				"unit.hour": "h ",
 				"unit.minute": "m ",
 				"unit.second": "s"
@@ -528,7 +358,7 @@ window.__ModuleLoader__.load({
 			return FALLBACK_LOCALE;
 		}
 
-		function t(key) {
+		function tr(key) {
 			var dict = MESSAGES[activeLocale];
 			var text = dict ? dict[key] : undefined;
 			if (text === undefined) {
@@ -708,13 +538,13 @@ window.__ModuleLoader__.load({
 				return data;
 			}, function (e) {
 				clearTimer();
-				if (e && e.name === "AbortError") throw new Error(t("capsule.rpcTimeout") + (RPC_TIMEOUT_MS / 1000) + t("capsule.rpcTimeoutSuffix"));
+				if (e && e.name === "AbortError") throw new Error(tr("capsule.rpcTimeout") + (RPC_TIMEOUT_MS / 1000) + tr("capsule.rpcTimeoutSuffix"));
 				throw e;
 			});
 		}
 
 		var PHASE_KEYS = { think: "phase.think", write: "phase.write", code: "phase.code", search: "phase.search" };
-		function phaseLabel(p) { return t(PHASE_KEYS[p] || "phase.busy"); }
+		function phaseLabel(p) { return tr(PHASE_KEYS[p] || "phase.busy"); }
 		var PHASE_COLORS = { think: "#2f6fed", write: "#0d9488", code: "#b45309", search: "#0e7490" };
 		function phaseColor(p) { return PHASE_COLORS[p] || "#2f6fed"; }
 		var END_KEYS = {
@@ -722,7 +552,7 @@ window.__ModuleLoader__.load({
 			blocked: "end.blocked", "max-tokens": "end.maxTokens", interrupted: "end.interrupted",
 			disposed: "end.disposed", unknown: "end.unknown",
 		};
-		function endLabel(r) { return t(END_KEYS[r] || "end.unknown"); }
+		function endLabel(r) { return tr(END_KEYS[r] || "end.unknown"); }
 		// 只有明确的 completed 才算成功：空 endReason（会话被关闭/agent 销毁）曾被判成功，属假阳性
 		function isSuccessEnd(r) { return r === "completed"; }
 
@@ -735,9 +565,9 @@ window.__ModuleLoader__.load({
 		function fmtDur(ms) {
 			var s = Math.max(0, Math.round((ms || 0) / 1000));
 			var hh = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-			if (hh > 0) return hh + t("unit.hour") + m + t("unit.minute") + sec + t("unit.second");
-			if (m > 0) return m + t("unit.minute") + sec + t("unit.second");
-			return sec + t("unit.second");
+			if (hh > 0) return hh + tr("unit.hour") + m + tr("unit.minute") + sec + tr("unit.second");
+			if (m > 0) return m + tr("unit.minute") + sec + tr("unit.second");
+			return sec + tr("unit.second");
 		}
 		function truncate(str, max) {
 			if (!str) return "";
@@ -803,10 +633,10 @@ window.__ModuleLoader__.load({
 				}
 				// 开关未开时明确警示「仅权限链路」，避免假阳性（undefined 视为旧调用，不提示）
 				var warn = switchOn === false;
-				new Notification(warn ? t("notify.testTitleWarn") : t("notify.testTitle"), {
+				new Notification(warn ? tr("notify.testTitleWarn") : tr("notify.testTitle"), {
 					body: warn
-						? t("notify.testBodyDisabled")
-						: t("notify.testBodyOk"),
+						? tr("notify.testBodyDisabled")
+						: tr("notify.testBodyOk"),
 					tag: "dsh-task-capsule-test",
 				});
 			} catch (e) { /* ignore */ }
@@ -965,7 +795,7 @@ window.__ModuleLoader__.load({
 					onClick: function () { pick(t.sessionId); },
 				},
 					h("span", { className: "dot", style: { background: isAct ? phaseColor(t.phase) : (isSuccessEnd(t.endReason) ? "var(--pl-ok)" : "var(--pl-err)") } }),
-					h("span", { className: "t" }, t.title || t("common.untitled")),
+					h("span", { className: "t" }, t.title || tr("common.untitled")),
 					h("span", { className: "m" }, isAct ? phaseLabel(t.phase) + " " + fmtClock((t.elapsed || 0) + Math.max(0, Date.now() - (lastSnapAt || Date.now()))) : endLabel(t.endReason) + " " + fmtDur(t.duration)));
 			});
 		}
@@ -1015,24 +845,24 @@ window.__ModuleLoader__.load({
 			if (waiting > 0) {
 				cls += " plp-wait";
 				var parts = [];
-				if (approvals > 0) parts.push(approvals + t("capsule.approvalsSuffix"));
-				if (asks > 0) parts.push(asks + t("capsule.asksSuffix"));
-				txt = "✋ " + parts.join(" · ") + (active.length > 1 ? " · " + active.length + t("capsule.tasksSuffix") : "");
-				title = active.length === 1 ? t("capsule.titleSingleConfirm") : t("capsule.titleExpand");
+				if (approvals > 0) parts.push(approvals + tr("capsule.approvalsSuffix"));
+				if (asks > 0) parts.push(asks + tr("capsule.asksSuffix"));
+				txt = "✋ " + parts.join(" · ") + (active.length > 1 ? " · " + active.length + tr("capsule.tasksSuffix") : "");
+				title = active.length === 1 ? tr("capsule.titleSingleConfirm") : tr("capsule.titleExpand");
 			} else if (active.length > 0) {
 				cls += " plp-run";
 				var newest = active.slice().sort(function (a, b) { return b.startTime - a.startTime; })[0];
 				var drift = st && st.now ? (Date.now() - st.now) : 0;
 				var elapsed = active.reduce(function (m, t) { return Math.max(m, (t.elapsed || 0) + drift); }, 0);
-				txt = active.length + t("capsule.activeCount") + fmtClock(elapsed);
+				txt = active.length + tr("capsule.activeCount") + fmtClock(elapsed);
 				dotColor = phaseColor(newest.phase);
-				title = (active.length === 1 ? t("capsule.titleJump") : t("capsule.titleExpand")) + " · " + phaseLabel(newest.phase);
+				title = (active.length === 1 ? tr("capsule.titleJump") : tr("capsule.titleExpand")) + " · " + phaseLabel(newest.phase);
 			} else {
 				// 空闲占位：头部位置稳定，明确「当前无任务」；点击仍可翻最近完成
 				cls += " plp-idle";
 				var unread = (st.stats && st.stats.unread) || 0;
-				txt = unread > 0 ? t("capsule.idlePrefix") + unread + t("capsule.unreadSuffix") : t("capsule.idleNoTasks");
-				title = unread > 0 ? t("capsule.idlePrefix") + unread + t("capsule.titleUnread") : (recent.length > 0 ? t("capsule.idleRecent") : t("capsule.empty"));
+				txt = unread > 0 ? tr("capsule.idlePrefix") + unread + tr("capsule.unreadSuffix") : tr("capsule.idleNoTasks");
+				title = unread > 0 ? tr("capsule.idlePrefix") + unread + tr("capsule.titleUnread") : (recent.length > 0 ? tr("capsule.idleRecent") : tr("capsule.empty"));
 			}
 
 			function handleClick() {
@@ -1051,7 +881,7 @@ window.__ModuleLoader__.load({
 					className: cls,
 					onClick: handleClick,
 					title: title,
-					"aria-label": (txt ? txt + t("common.period") : "") + title,
+					"aria-label": (txt ? txt + tr("common.period") : "") + title,
 					// 单任务时点击直接跳会话、不弹菜单：声明 haspopup 会让读屏语义出错
 					"aria-haspopup": active.length === 1 ? undefined : "true",
 					"aria-expanded": active.length === 1 ? undefined : popOpen,
@@ -1059,10 +889,10 @@ window.__ModuleLoader__.load({
 					h("span", { className: "plp-dot", style: dotColor ? { background: dotColor } : null }),
 					txt ? h("span", { className: "plp-txt" }, txt) : null),
 				popOpen ? h("div", { ref: popRef, className: "plp-pop", role: "menu" },
-					h("div", { className: "plp-pop-head" }, active.length > 0 ? t("pop.activeHead") : t("pop.recentHead")),
+					h("div", { className: "plp-pop-head" }, active.length > 0 ? tr("pop.activeHead") : tr("pop.recentHead")),
 					(active.length + recent.length) > 0
 						? taskListNodes(active, recent, function (sid) { setPopOpen(false); openSession(sid); })
-						: h("div", { className: "plp-pop-head" }, t("capsule.empty"))) : null);
+						: h("div", { className: "plp-pop-head" }, tr("capsule.empty"))) : null);
 		}
 		//#endregion
 
@@ -1099,8 +929,6 @@ window.__ModuleLoader__.load({
 				}
 
 				var pending = [];
-				// 因为「正盯着屏幕」被压掉的完成记录：只在显式开启 soundForeground 时补一声
-				var suppressed = [];
 				for (var r of (st.recent || [])) {
 					var key = r.sessionId + ":" + r.endTime;
 					if (seenDone.has(key)) continue;
@@ -1110,12 +938,12 @@ window.__ModuleLoader__.load({
 					if (ok ? cfg.notifyOnComplete === false : cfg.notifyOnError === false) continue;
 					// 眼前正在看的不打扰；超过 FRESH_MS 才当"离开期间攒下的"
 					var age = Date.now() - (Number(r.endTime) || 0);
-					if (watching && age < FRESH_MS) { suppressed.push({ ok: ok }); continue; }
+					if (watching && age < FRESH_MS) continue;
 					pending.push({
 						id: key,
 						kind: ok ? "done" : "error",
 						ok: ok,
-						title: (ok ? t("toast.donePrefix") : "❌ " + endLabel(r.endReason) + t("common.colon")) + (r.title || t("common.untitled")),
+						title: (ok ? tr("toast.donePrefix") : "❌ " + endLabel(r.endReason) + tr("common.colon")) + (r.title || tr("common.untitled")),
 						meta: fmtDur(r.duration) + (r.errorMessage ? " · " + truncate(r.errorMessage, 60) : ""),
 						sessionId: r.sessionId,
 						endReason: r.endReason,
@@ -1127,14 +955,14 @@ window.__ModuleLoader__.load({
 				if (cfg.leaderOnlyCards === true && !leader) pending.length = 0;
 
 				var added = [];
-				// 多条积压合并成一张：闸门放开后不该被五个t("end.completed")糊脸
+				// 多条积压合并成一张：闸门放开后不该被五个「完成」糊脸
 				if (pending.length >= 2) {
 					var badCount = pending.reduce(function (n, x) { return n + (x.ok ? 0 : 1); }, 0);
 					added.push({
 						id: "batch:" + pending[pending.length - 1].id + ":" + pending.length,
 						kind: badCount > 0 ? "error" : "done",
-						title: "🔔 " + pending.length + t("toast.finishedCount") + (badCount > 0 ? t("common.openParen") + badCount + t("toast.badSuffix") : t("toast.allDone")),
-						meta: t("toast.longest") + fmtDur(Math.max.apply(null, pending.map(function (x) { return x.duration || 0; }))) + t("toast.detailsHint"),
+						title: "🔔 " + pending.length + tr("toast.finishedCount") + (badCount > 0 ? tr("common.openParen") + badCount + tr("toast.badSuffix") : tr("toast.allDone")),
+						meta: tr("toast.longest") + fmtDur(Math.max.apply(null, pending.map(function (x) { return x.duration || 0; }))) + tr("toast.detailsHint"),
 						sessionId: pending[0].sessionId,
 					});
 				} else if (pending.length === 1) {
@@ -1150,11 +978,11 @@ window.__ModuleLoader__.load({
 							if (seenAsk.has(qkey)) continue;
 							seenAsk.add(qkey);
 							askCount++;
-							var qHead = q.header || (q.count > 1 ? q.count + t("ask.questions") : t("ask.options"));
+							var qHead = q.header || (q.count > 1 ? q.count + tr("ask.questions") : tr("ask.options"));
 							added.push({
 								id: qkey,
 								kind: "ask",
-								title: t("ask.waitingTitle") + qHead + (q.optionCount > 0 ? t("common.openParen") + q.optionCount + t("ask.optionCount") : ""),
+								title: tr("ask.waitingTitle") + qHead + (q.optionCount > 0 ? tr("common.openParen") + q.optionCount + tr("ask.optionCount") : ""),
 								meta: truncate(q.text || "", 100),
 								sessionId: ta.sessionId,
 							});
@@ -1171,7 +999,7 @@ window.__ModuleLoader__.load({
 							added.push({
 								id: akey,
 								kind: "confirm",
-								title: t("confirm.waitingTitle") + (a.toolName || t("confirm.toolFallback")),
+								title: tr("confirm.waitingTitle") + (a.toolName || tr("confirm.toolFallback")),
 								meta: truncate(a.reason || t.title || "", 80),
 								sessionId: t.sessionId,
 							});
@@ -1196,17 +1024,13 @@ window.__ModuleLoader__.load({
 						if (confirmCount + askCount > 0) playSound("ding", "ok");
 						else playSound(cfg.soundEffect, pending.length > 0 && !pending[0].ok ? "error" : "ok");
 					}
-					// 前台提示音：卡片仍然不弹（不打扰视觉），但按设置补一声
-					if (added.length === 0 && suppressed.length > 0 && leader && cfg.soundNotify !== false && cfg.soundForeground === true) {
-						playSound(cfg.soundEffect, suppressed[0].ok ? "ok" : "error");
-					}
 					if (leader && cfg.systemNotify && (cfg.systemNotifyAlways || !watching)) {
 						var head = confirmCount + askCount > 0
-							? (askCount > 0 ? t("notify.askTitle") : t("notify.confirmTitle"))
-							: (pending.length >= 2 ? "🔔 " + pending.length + t("toast.finishedCount")
-								: (pending.length === 1 ? (pending[0].ok ? t("notify.doneTitle") : t("notify.failTitle") + endLabel(pending[0].endReason)) : ""));
-						var body = askCount > 0 ? (askCount + t("notify.askBodySuffix"))
-							: (confirmCount > 0 ? (confirmCount + t("notify.confirmBodySuffix")) : (pending.length > 0 ? (pending[0].title || "") : ""));
+							? (askCount > 0 ? tr("notify.askTitle") : tr("notify.confirmTitle"))
+							: (pending.length >= 2 ? "🔔 " + pending.length + tr("toast.finishedCount")
+								: (pending.length === 1 ? (pending[0].ok ? tr("notify.doneTitle") : tr("notify.failTitle") + endLabel(pending[0].endReason)) : ""));
+						var body = askCount > 0 ? (askCount + tr("notify.askBodySuffix"))
+							: (confirmCount > 0 ? (confirmCount + tr("notify.confirmBodySuffix")) : (pending.length > 0 ? (pending[0].title || "") : ""));
 						if (head) systemNotify(head, body, "dsh-task-capsule-batch", pending.length > 0 ? pending[0].sessionId : "");
 					}
 				}
@@ -1238,13 +1062,13 @@ window.__ModuleLoader__.load({
 						h("button", {
 							type: "button",
 							className: "pln-go",
-							"aria-label": t("toast.actionLabel"),
+							"aria-label": tr("toast.actionLabel"),
 							onClick: function () { dismiss(t.id); openSession(t.sessionId); },
-						}, t("toast.action"))),
+						}, tr("toast.action"))),
 					h("button", {
 						type: "button",
 						className: "pln-close",
-						"aria-label": t("toast.close"),
+						"aria-label": tr("toast.close"),
 						onClick: function () { dismiss(t.id); },
 					}, "✕"));
 			}));
@@ -1256,9 +1080,9 @@ window.__ModuleLoader__.load({
 		// 预设文案随语言变化，必须在渲染时取，不能在模块加载时固化
 		function presetList() {
 			return [
-				{ id: "quiet", label: t("settings.presetQuiet"), desc: t("settings.presetQuietDesc") },
-				{ id: "standard", label: t("settings.presetStandard"), desc: t("settings.presetStandardDesc") },
-				{ id: "watch", label: t("settings.presetWatch"), desc: t("settings.presetWatchDesc") },
+				{ id: "quiet", label: tr("settings.presetQuiet"), desc: tr("settings.presetQuietDesc") },
+				{ id: "standard", label: tr("settings.presetStandard"), desc: tr("settings.presetStandardDesc") },
+				{ id: "watch", label: tr("settings.presetWatch"), desc: tr("settings.presetWatchDesc") },
 			];
 		}
 
@@ -1281,24 +1105,24 @@ window.__ModuleLoader__.load({
 		function PermRow(props) {
 			var perm = props.perm;
 			var map = {
-				granted: { cls: "ok", label: t("settings.permGranted") },
-				default: { cls: "off", label: t("settings.permDefault") },
-				denied: { cls: "err", label: t("settings.permDenied") },
-				unsupported: { cls: "off", label: t("settings.permUnsupported") },
+				granted: { cls: "ok", label: tr("settings.permGranted") },
+				default: { cls: "off", label: tr("settings.permDefault") },
+				denied: { cls: "err", label: tr("settings.permDenied") },
+				unsupported: { cls: "off", label: tr("settings.permUnsupported") },
 			};
 			var st = map[perm] || map.unsupported;
 			return h("div", { className: "pls-row" },
 				h("div", { className: "pls-label" },
-					h("div", null, t("settings.permTitle")),
+					h("div", null, tr("settings.permTitle")),
 					perm === "denied" ? h("div", { className: "pls-guide" },
-						t("settings.permDeniedGuide")) : null,
-					perm === "default" ? h("div", { className: "pls-desc" }, t("settings.permGuide")) : null),
+						tr("settings.permDeniedGuide")) : null,
+					perm === "default" ? h("div", { className: "pls-desc" }, tr("settings.permGuide")) : null),
 				h("span", { className: "pls-badge " + st.cls }, st.label),
 				(perm === "granted" || perm === "default") ? h("button", {
 					type: "button",
 					className: "pls-btn",
 					onClick: props.onTest,
-				}, perm === "granted" ? t("settings.permTest") : t("settings.permRequest")) : null);
+				}, perm === "granted" ? tr("settings.permTest") : tr("settings.permRequest")) : null);
 		}
 
 		function CapsuleSettings() {
@@ -1318,14 +1142,14 @@ window.__ModuleLoader__.load({
 					console.error("[dsh-task-capsule] save notify config failed:", e && e.message);
 				});
 			}
-			if (!cfg) return h("div", { className: "pls-root" }, h("div", { className: "pls-intro" }, t("settings.loading")));
+			if (!cfg) return h("div", { className: "pls-root" }, h("div", { className: "pls-intro" }, tr("settings.loading")));
 			return h("div", { className: "pls-root" },
 				h("div", { className: "pls-intro" },
-					t("settings.intro1")),
+					tr("settings.intro1")),
 				h("div", { className: "pls-intro" },
-					t("settings.intro2")),
+					tr("settings.intro2")),
 				h("div", { className: "pls-card" },
-					h("div", { className: "pls-h" }, t("settings.sectionIntensity")),
+					h("div", { className: "pls-h" }, tr("settings.sectionIntensity")),
 					h("div", { className: "pls-seg" }, presetList().map(function (p) {
 						return h("button", {
 							type: "button",
@@ -1337,58 +1161,46 @@ window.__ModuleLoader__.load({
 					})),
 					h("div", { className: "pls-desc", style: { marginTop: "8px" } }, (presetList().filter(function (p) { return p.id === cfg.preset; })[0] || presetList()[1]).desc)),
 				h("div", { className: "pls-card" },
-					h("div", { className: "pls-h" }, t("settings.sectionWhat")),
+					h("div", { className: "pls-h" }, tr("settings.sectionWhat")),
 					h(SwitchRow, {
-						label: t("settings.notifyDone"), desc: t("settings.notifyDoneDesc"),
+						label: tr("settings.notifyDone"), desc: tr("settings.notifyDoneDesc"),
 						on: cfg.notifyOnComplete !== false,
 						onToggle: function () { patch({ notifyOnComplete: cfg.notifyOnComplete === false }); },
 					}),
 					h(SwitchRow, {
-						label: t("settings.notifyError"), desc: t("settings.notifyErrorDesc"),
+						label: tr("settings.notifyError"), desc: tr("settings.notifyErrorDesc"),
 						on: cfg.notifyOnError !== false,
 						onToggle: function () { patch({ notifyOnError: cfg.notifyOnError === false }); },
 					}),
 					h(SwitchRow, {
-						label: t("settings.notifyConfirm"), desc: t("settings.notifyConfirmDesc"),
+						label: tr("settings.notifyConfirm"), desc: tr("settings.notifyConfirmDesc"),
 						on: cfg.notifyOnConfirm !== false,
 						onToggle: function () { patch({ notifyOnConfirm: cfg.notifyOnConfirm === false }); },
 					}),
 					h(SwitchRow, {
-						label: t("settings.notifyAsk"), desc: t("settings.notifyAskDesc"),
+						label: tr("settings.notifyAsk"), desc: tr("settings.notifyAskDesc"),
 						on: cfg.notifyOnAsk !== false,
 						onToggle: function () { patch({ notifyOnAsk: cfg.notifyOnAsk === false }); },
 					})),
 				h("div", { className: "pls-card" },
-					h("div", { className: "pls-h" }, t("settings.sectionHow")),
+					h("div", { className: "pls-h" }, tr("settings.sectionHow")),
 					h(SwitchRow, {
-						label: t("settings.sound"), desc: t("settings.soundDesc"),
+						label: tr("settings.sound"), desc: tr("settings.soundDesc"),
 						on: cfg.soundNotify !== false,
 						onToggle: function () { patch({ soundNotify: cfg.soundNotify === false }); },
 					}),
 					h("div", { className: "pls-row" },
-						h("div", { className: "pls-label" }, h("div", null, t("settings.soundEffect"))),
+						h("div", { className: "pls-label" }, h("div", null, tr("settings.soundEffect"))),
 						h("select", {
 							className: "pls-sel",
-							"aria-label": t("settings.soundEffect"),
+							"aria-label": tr("settings.soundEffect"),
 							value: cfg.soundEffect || "chime",
 							onChange: function (e) { patch({ soundEffect: e.target.value }); },
 						},
-							h("option", { value: "chime" }, t("settings.soundChime")),
-							h("option", { value: "ding" }, t("settings.soundDing")))),
-					cfg.soundNotify !== false ? h(SwitchRow, {
-						label: t("settings.soundForeground"), desc: t("settings.soundForegroundDesc"),
-						on: cfg.soundForeground === true,
-						onToggle: function () { patch({ soundForeground: !(cfg.soundForeground === true) }); },
-					}) : null,
-					h("div", { className: "pls-row" },
-						h("div", { className: "pls-label" }, h("div", null, t("settings.soundTest"))),
-						h("button", {
-							type: "button",
-							className: "pls-btn",
-							onClick: function () { playSound(cfg.soundEffect || "chime", "ok"); },
-						}, t("settings.soundTestAction"))),
+							h("option", { value: "chime" }, tr("settings.soundChime")),
+							h("option", { value: "ding" }, tr("settings.soundDing")))),
 					h(SwitchRow, {
-						label: t("settings.systemNotify"), desc: t("settings.systemNotifyDesc"),
+						label: tr("settings.systemNotify"), desc: tr("settings.systemNotifyDesc"),
 						on: !!cfg.systemNotify,
 						onToggle: function () {
 							var next = !cfg.systemNotify;
@@ -1400,29 +1212,29 @@ window.__ModuleLoader__.load({
 						},
 					}),
 					cfg.systemNotify ? h(SwitchRow, {
-						label: t("settings.foreground"), desc: t("settings.foregroundDesc"),
+						label: tr("settings.foreground"), desc: tr("settings.foregroundDesc"),
 						on: !!cfg.systemNotifyAlways,
 						onToggle: function () { patch({ systemNotifyAlways: !cfg.systemNotifyAlways }); },
 					}) : null,
 					h(PermRow, { perm: perm, onTest: function () { sendTestNotify(cfg.systemNotify !== false); } }),
 					h(SwitchRow, {
-						label: t("settings.mainWindowOnly"), desc: t("settings.mainWindowOnlyDesc"),
+						label: tr("settings.mainWindowOnly"), desc: tr("settings.mainWindowOnlyDesc"),
 						on: cfg.leaderOnlyCards === true,
 						onToggle: function () { patch({ leaderOnlyCards: !(cfg.leaderOnlyCards === true) }); },
 					}),
 					h("div", { className: "pls-row" },
-						h("div", { className: "pls-label" }, h("div", null, t("settings.cardDuration"))),
+						h("div", { className: "pls-label" }, h("div", null, tr("settings.cardDuration"))),
 						h("select", {
 							className: "pls-sel",
-							"aria-label": t("settings.cardDuration"),
+							"aria-label": tr("settings.cardDuration"),
 							value: String(Number.isFinite(cfg.notifyStayMs) ? cfg.notifyStayMs : 8000),
 							onChange: function (e) { patch({ notifyStayMs: Number(e.target.value) }); },
 						},
-							h("option", { value: "5000" }, t("settings.duration5s")),
-							h("option", { value: "8000" }, t("settings.duration8s")),
-							h("option", { value: "15000" }, t("settings.duration15s")),
-							h("option", { value: "30000" }, t("settings.duration30s")),
-							h("option", { value: "0" }, t("settings.durationPersistent"))))),
+							h("option", { value: "5000" }, tr("settings.duration5s")),
+							h("option", { value: "8000" }, tr("settings.duration8s")),
+							h("option", { value: "15000" }, tr("settings.duration15s")),
+							h("option", { value: "30000" }, tr("settings.duration30s")),
+							h("option", { value: "0" }, tr("settings.durationPersistent"))))),
 				h(LedgerPanel, null));
 		}
 		// 账本面板：今日汇总 + 最近记录 + 详情 + 复制摘要，挂在设置区里（不新开页面，守住一寸地）
@@ -1437,12 +1249,12 @@ window.__ModuleLoader__.load({
 		}
 
 		function dayLabel(offset) {
-			if (offset === 0) return t("ledger.today");
-			if (offset === 1) return t("ledger.yesterday");
+			if (offset === 0) return tr("ledger.today");
+			if (offset === 1) return tr("ledger.yesterday");
 			var d = new Date(dayStartAt(offset));
 			// 葡语按「日/月」，中文与英语按「月/日」
 			if (activeLocale === "pt") return d.getDate() + "/" + (d.getMonth() + 1);
-			return (d.getMonth() + 1) + t("ledger.monthSuffix") + d.getDate() + t("ledger.daySuffix");
+			return (d.getMonth() + 1) + tr("ledger.monthSuffix") + d.getDate() + tr("ledger.daySuffix");
 		}
 
 		function ledgerCsv(records) {
@@ -1478,11 +1290,11 @@ window.__ModuleLoader__.load({
 		}
 
 		function summarizeLine(s) {
-			if (!s || !s.count) return t("ledger.emptyTodaySummary");
-			var parts = [t("ledger.summaryPrefix") + s.count + t("ledger.summaryTasks"), t("ledger.summaryTotal") + fmtDur(s.durationMs)];
-			if (s.approvalWaitMs > 0) parts.push(t("ledger.summaryApprovalWait") + fmtDur(s.approvalWaitMs));
-			if (s.failures > 0) parts.push(s.failures + t("ledger.summaryFailed"));
-			if (s.interrupted > 0) parts.push(s.interrupted + t("ledger.summaryInterrupted") + (s.recovered > 0 ? t("ledger.summaryRecoveredOpen") + s.recovered + t("ledger.summaryRecoveredClose") : ""));
+			if (!s || !s.count) return tr("ledger.emptyTodaySummary");
+			var parts = [tr("ledger.summaryPrefix") + s.count + tr("ledger.summaryTasks"), tr("ledger.summaryTotal") + fmtDur(s.durationMs)];
+			if (s.approvalWaitMs > 0) parts.push(tr("ledger.summaryApprovalWait") + fmtDur(s.approvalWaitMs));
+			if (s.failures > 0) parts.push(s.failures + tr("ledger.summaryFailed"));
+			if (s.interrupted > 0) parts.push(s.interrupted + tr("ledger.summaryInterrupted") + (s.recovered > 0 ? tr("ledger.summaryRecoveredOpen") + s.recovered + tr("ledger.summaryRecoveredClose") : ""));
 			return parts.join(" · ");
 		}
 
@@ -1548,12 +1360,12 @@ window.__ModuleLoader__.load({
 
 			function copy(r) {
 				var text = [
-					r.title || t("common.untitled"),
+					r.title || tr("common.untitled"),
 					endLabel(r.endReason),
 					fmtDur(r.duration),
-					(r.steps || 0) + t("ledger.rowSteps") + (r.toolCalls || 0) + t("ledger.rowTools"),
-					r.approvalWaitMs ? t("ledger.rowApprovalWait") + fmtDur(r.approvalWaitMs) : "",
-				].filter(Boolean).join(t("common.pipe"));
+					(r.steps || 0) + tr("ledger.rowSteps") + (r.toolCalls || 0) + tr("ledger.rowTools"),
+					r.approvalWaitMs ? tr("ledger.rowApprovalWait") + fmtDur(r.approvalWaitMs) : "",
+				].filter(Boolean).join(tr("common.pipe"));
 				try {
 					if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text);
 					else {
@@ -1573,25 +1385,25 @@ window.__ModuleLoader__.load({
 			var sum = today;
 			var chips = [];
 			if (sum && sum.count > 0) {
-				chips.push({ t: sum.count + t("ledger.summaryTasks"), c: "acc" });
+				chips.push({ t: sum.count + tr("ledger.summaryTasks"), c: "acc" });
 				if (sum.durationMs > 0) chips.push({ t: fmtDur(sum.durationMs), c: "" });
-				if (sum.approvalWaitMs > 0) chips.push({ t: t("ledger.chipConfirm") + fmtDur(sum.approvalWaitMs), c: "warn" });
-				if (sum.failures > 0) chips.push({ t: t("ledger.chipFail") + sum.failures, c: "bad" });
-				if (sum.interrupted > 0) chips.push({ t: t("ledger.chipInterrupted") + sum.interrupted, c: "" });
+				if (sum.approvalWaitMs > 0) chips.push({ t: tr("ledger.chipConfirm") + fmtDur(sum.approvalWaitMs), c: "warn" });
+				if (sum.failures > 0) chips.push({ t: tr("ledger.chipFail") + sum.failures, c: "bad" });
+				if (sum.interrupted > 0) chips.push({ t: tr("ledger.chipInterrupted") + sum.interrupted, c: "" });
 			}
 
 			var body = null;
 			if (open && view.error) {
 				body = h("div", { className: "pls-desc" },
-					t("ledger.readFailed") + view.error + " ",
-					h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, 0); } }, t("ledger.retry")));
+					tr("ledger.readFailed") + view.error + " ",
+					h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, 0); } }, tr("ledger.retry")));
 			} else if (open) {
 				body = [
 					h("div", { className: "pls-daynav" },
-						h("button", { type: "button", className: "pls-btn", "aria-label": t("ledger.prevDay"), onClick: function () { fetchDay(view.day + 1, 0); } }, "‹"),
+						h("button", { type: "button", className: "pls-btn", "aria-label": tr("ledger.prevDay"), onClick: function () { fetchDay(view.day + 1, 0); } }, "‹"),
 						h("span", { className: "plb-chip" }, dayLabel(view.day)),
 						h("button", {
-							type: "button", className: "pls-btn", "aria-label": t("ledger.nextDay"),
+							type: "button", className: "pls-btn", "aria-label": tr("ledger.nextDay"),
 							disabled: view.day === 0,
 							onClick: function () { fetchDay(Math.max(0, view.day - 1), 0); },
 						}, "›"),
@@ -1608,19 +1420,19 @@ window.__ModuleLoader__.load({
 								onClick: function () { setOpenId(isOpen ? null : r.recordId); },
 							},
 								h("span", { className: "dot", style: { background: isSuccessEnd(r.endReason) ? "var(--pl-ok)" : (r.recovered ? "var(--pl-warn)" : "var(--pl-err)") } }),
-								h("span", { className: "t" }, (r.title || t("common.untitled")) + (r.recovered ? t("ledger.recoveredTag") : "")),
+								h("span", { className: "t" }, (r.title || tr("common.untitled")) + (r.recovered ? tr("ledger.recoveredTag") : "")),
 								h("span", { className: "m" }, fmtDur(r.duration))),
 							isOpen ? h("div", { className: "pls-entry-body" },
-								h("div", null, t("ledger.end") + endLabel(r.endReason) + (r.errorMessage ? " · " + truncate(r.errorMessage, 80) : "")),
-								h("div", null, (r.steps || 0) + t("ledger.rowStepsDot") + (r.toolCalls || 0) + t("ledger.rowToolsLong") + (r.approvalCount ? " · " + r.approvalCount + t("ledger.rowApprovals") + fmtDur(r.approvalWaitMs) : "")),
-								r.models && r.models.length ? h("div", null, t("ledger.models") + r.models.join(t("common.listSep"))) : null,
-								h("div", null, t("ledger.start") + new Date(r.startTime || 0).toLocaleString() + t("ledger.startEnd") + new Date(r.endTime || 0).toLocaleString()),
-								h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? t("ledger.copied") : t("ledger.copy"))) : null);
+								h("div", null, tr("ledger.end") + endLabel(r.endReason) + (r.errorMessage ? " · " + truncate(r.errorMessage, 80) : "")),
+								h("div", null, (r.steps || 0) + tr("ledger.rowStepsDot") + (r.toolCalls || 0) + tr("ledger.rowToolsLong") + (r.approvalCount ? " · " + r.approvalCount + tr("ledger.rowApprovals") + fmtDur(r.approvalWaitMs) : "")),
+								r.models && r.models.length ? h("div", null, tr("ledger.models") + r.models.join(tr("common.listSep"))) : null,
+								h("div", null, tr("ledger.start") + new Date(r.startTime || 0).toLocaleString() + tr("ledger.startEnd") + new Date(r.endTime || 0).toLocaleString()),
+								h("button", { type: "button", className: "pls-btn", onClick: function () { copy(r); } }, copied === r.recordId ? tr("ledger.copied") : tr("ledger.copy"))) : null);
 					}),
-					(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, (view.day === 0 ? t("ledger.today") : dayLabel(view.day)) + t("ledger.noRecords")) : null,
+					(!view.loading && view.records.length === 0) ? h("div", { className: "pls-desc" }, (view.day === 0 ? tr("ledger.today") : dayLabel(view.day)) + tr("ledger.noRecords")) : null,
 					view.records.length < view.total
 						? h("button", { type: "button", className: "pls-btn", onClick: function () { fetchDay(view.day, view.records.length); } },
-							view.loading ? t("ledger.loading") : t("ledger.loadMore") + (view.total - view.records.length) + t("ledger.loadMoreClose"))
+							view.loading ? tr("ledger.loading") : tr("ledger.loadMore") + (view.total - view.records.length) + tr("ledger.loadMoreClose"))
 						: null,
 				];
 			}
@@ -1636,10 +1448,10 @@ window.__ModuleLoader__.load({
 						if (next && view.day === 0 && view.records.length === 0 && !view.loading) fetchDay(0, 0);
 					},
 				},
-					h("span", { className: "plb-title" }, t("ledger.title")),
-					chips.length === 0 ? h("span", { className: "plb-sub" }, view.loading ? t("ledger.reading") : t("ledger.emptyToday")) : null,
+					h("span", { className: "plb-title" }, tr("ledger.title")),
+					chips.length === 0 ? h("span", { className: "plb-sub" }, view.loading ? tr("ledger.reading") : tr("ledger.emptyToday")) : null,
 					h("span", { style: { flex: "1" } }),
-					h("span", { className: "plb-arrow", "aria-hidden": "true" }, open ? t("ledger.collapse") : t("ledger.expand"))),
+					h("span", { className: "plb-arrow", "aria-hidden": "true" }, open ? tr("ledger.collapse") : tr("ledger.expand"))),
 				chips.length > 0 ? h("div", { className: "plb-chips" },
 					chips.map(function (c2, i) {
 						return h("span", { key: i, className: "plb-chip" + (c2.c ? " plb-chip-" + c2.c : "") }, c2.t);
@@ -1674,23 +1486,23 @@ window.__ModuleLoader__.load({
 			ctx.effect(function () { return startRunPolling(); }, "dsh-task-capsule: runstate polling");
 			var slots = ctx.get("slots");
 			if (slots === undefined) {
-				console.error(t("error.noSlots"));
+				console.error(tr("error.noSlots"));
 				return;
 			}
 
 			// 任务胶囊：in-flow 挂会话 header 右侧 utilities 行（chrome 行，不遮消息区）
 			slots.inject(PLATFORM.slots.capsule, function () { return slots.register(
-				{ name: PLATFORM.slots.capsule, id: "dsh-task-capsule-capsule", order: 5, label: t("slot.capsuleLabel") },
+				{ name: PLATFORM.slots.capsule, id: "dsh-task-capsule-capsule", order: 5, label: tr("slot.capsuleLabel") },
 				function () { return h(Capsule, null); }); });
 
 			// 通知卡栈：全局浮层
 			slots.inject(PLATFORM.slots.overlay, function () { return slots.register(
-				{ name: PLATFORM.slots.overlay, id: "dsh-task-capsule-overlay", order: 31, label: t("slot.overlayLabel") },
+				{ name: PLATFORM.slots.overlay, id: "dsh-task-capsule-overlay", order: 31, label: tr("slot.overlayLabel") },
 				function () { return h(ToastStack, null); }); });
 
 			// 设置页：通知行为配置
 			slots.inject(PLATFORM.slots.settings, function () { return slots.register(
-				{ name: PLATFORM.slots.settings, id: "dsh-task-capsule", order: 91, label: t("slot.settingsLabel") },
+				{ name: PLATFORM.slots.settings, id: "dsh-task-capsule", order: 91, label: tr("slot.settingsLabel") },
 				function () { return h(CapsuleSettings, null); }); });
 		}
 
