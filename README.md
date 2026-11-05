@@ -147,7 +147,7 @@ node scripts/gen-locale.mjs --check    # 只校验是否同步（提交前跑）
 
 ```sh
 node scripts/smoke.mjs                                                     # 模块装配 + 标识/平台符号一致
-node --test scripts/unit.test.mjs                                          # 14 条纯函数与降级路径
+node --test scripts/unit.test.mjs                                          # 15 条纯函数与降级路径
 node scripts/gen-locale.mjs --check                                        # locale/*.json 与 client.js 是否同步
 DSH_WEB_BASE=http://127.0.0.1:<port> bash scripts/security-regression.sh   # 路由信任门 4 条断言
 ```
