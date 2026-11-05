@@ -9,7 +9,8 @@
     "client.js",
     "src/",
     "features/",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "locale/"
   ],
   "exports": {
     ".": "./index.js",

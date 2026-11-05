@@ -128,11 +128,27 @@ curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
 
 > **1.x 更新策略**：1.0 之后不冻结功能，1.x 接功能与改进（含社区 PR），破坏性变更留给 2.0。
 
+## 界面语言
+
+默认中文，跟随 DSH 客户端语言自动切换：`zh` / `en`。语言由可选的 `locale` 服务决定，服务缺失、语言未知或词条缺失时一律回落到中文——旧版 DSH 上行为与之前完全一致。
+
+词条源码是 `locale/<lang>.json`（键集三份必须一致），`client.js` 里 `/* locale-messages:start */` 与 `end` 之间那段是生成出来的，别手改：
+
+```sh
+node scripts/gen-locale.mjs            # locale/*.json → client.js
+node scripts/gen-locale.mjs --check    # 只校验是否同步（提交前跑）
+```
+
+加一门语言：复制 `locale/en.json` 改名、翻完，在 `scripts/gen-locale.mjs` 的 `LOCALES` 里加一行，再跑一次上面第一条。运行时没有构建链，内联的就是字典本身。
+
+本仓库只内置 `zh` / `en`：`locale` 的可用语言由 DSH 客户端目录决定，插件不自行 `addLanguage()` 注册新语言，所以再做语言包请走独立插件（`addLanguage({ id, label, fallback: 'en' })` + 自带字典）。
+
 ## 开发
 
 ```sh
 node scripts/smoke.mjs                                                     # 模块装配 + 标识/平台符号一致
 node --test scripts/unit.test.mjs                                          # 14 条纯函数与降级路径
+node scripts/gen-locale.mjs --check                                        # locale/*.json 与 client.js 是否同步
 DSH_WEB_BASE=http://127.0.0.1:<port> bash scripts/security-regression.sh   # 路由信任门 4 条断言
 ```
 

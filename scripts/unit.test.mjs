@@ -187,3 +187,13 @@ test('平台符号：三处槽位与服务名就位', () => {
   assert.equal(platform.checkServices({ get: () => undefined }, ['webServer']).ok, false)
   assert.equal(platform.checkServices({ get: () => ({}) }, ['webServer']).ok, true)
 })
+
+test('i18n：翻译函数不叫 t，避免被 var 提升静默遮蔽', () => {
+  const src = fs.readFileSync(new URL('../client.js', import.meta.url), 'utf8')
+  assert.match(src, /function tr\(key\)/)
+  // 这个文件里 t 是循环变量/任务对象的老名字：翻译函数一旦改回 t，var 提升
+  // 会让整段函数体里的 t(...) 变成 undefined 或任务对象，且加载期不报错。
+  assert.equal(/function t\(key\)/.test(src), false)
+  assert.equal(/\bt\("/.test(src), false)
+  assert.equal(/\bt\(key\)/.test(src), false)
+})
