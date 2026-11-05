@@ -126,7 +126,7 @@ curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
 - 更新：`cd 你的克隆目录 && git pull` → 完全退出并重启 DSH Desktop。`link:` 安装不会自动跟版本。
 - 出问题按 [docs/ROLLBACK.md](docs/ROLLBACK.md) 取证与回滚。
 
-> **1.0 冻结**：功能到此为止，1.x 只修 bug、不新增功能。
+> **1.x 更新策略**：1.0 之后不冻结功能，1.x 接功能与改进（含社区 PR），破坏性变更留给 2.0。
 
 ## 开发
 
