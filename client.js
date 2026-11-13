@@ -1470,6 +1470,7 @@ window.__ModuleLoader__.load({
 			// 服务一出现就接管；两处都拿不到才留在 zh（与旧版 DSH 的行为一致）。
 			var localeSvc = null;
 			var releaseLocale = null;
+			var slotEntries = [];
 
 			function readLocale() {
 				if (!localeSvc) return null;
@@ -1494,6 +1495,8 @@ window.__ModuleLoader__.load({
 				activeLocale = next;
 				// 三块 UI 共用同一个 store：emit 一次即整页换语言
 				capsuleStore.emit();
+				// label 是注册时定型的文本，语言变了要重注册（见下方 relabelSlots）
+				relabelSlots();
 			}
 
 			function attachLocale() {
@@ -1533,20 +1536,44 @@ window.__ModuleLoader__.load({
 				return;
 			}
 
+			// 注册项的 label 是「注册方自己本地化的文本」，注册那一刻取值、之后不会自动更新；
+			// 插件常比 locale 服务先挂载，注册时只能按英文兜底。所以语言一变就按新语言重注册。
+			function relabelSlots() {
+				if (!slotEntries) return;
+				slotEntries.forEach(function (entry) {
+					if (!entry.alive || typeof entry.remount !== "function") return;
+					try { if (entry.dispose) entry.dispose(); } catch (e) { /* 旧注册已失效，继续重注册 */ }
+					entry.dispose = null;
+					try { entry.remount(); } catch (e) { entry.alive = false; }
+				});
+			}
+
+			function registerSlot(slotName, id, order, labelKey, Component) {
+				slots.inject(slotName, function () {
+					var entry = { alive: true, dispose: null, remount: null };
+					entry.remount = function () {
+						return (entry.dispose = slots.register(
+							{ name: slotName, id: id, order: order, label: tr(labelKey) },
+							function () { return h(Component, null); }));
+					};
+					entry.remount();
+					slotEntries.push(entry);
+					return function () {
+						entry.alive = false;
+						if (entry.dispose) { try { entry.dispose(); } catch (e) { /* 已卸载 */ } }
+						entry.dispose = null;
+					};
+				});
+			}
+
 			// 任务胶囊：in-flow 挂会话 header 右侧 utilities 行（chrome 行，不遮消息区）
-			slots.inject(PLATFORM.slots.capsule, function () { return slots.register(
-				{ name: PLATFORM.slots.capsule, id: "dsh-task-capsule-capsule", order: 5, label: tr("slot.capsuleLabel") },
-				function () { return h(Capsule, null); }); });
+			registerSlot(PLATFORM.slots.capsule, "dsh-task-capsule-capsule", 5, "slot.capsuleLabel", Capsule);
 
 			// 通知卡栈：全局浮层
-			slots.inject(PLATFORM.slots.overlay, function () { return slots.register(
-				{ name: PLATFORM.slots.overlay, id: "dsh-task-capsule-overlay", order: 31, label: tr("slot.overlayLabel") },
-				function () { return h(ToastStack, null); }); });
+			registerSlot(PLATFORM.slots.overlay, "dsh-task-capsule-overlay", 31, "slot.overlayLabel", ToastStack);
 
 			// 设置页：通知行为配置
-			slots.inject(PLATFORM.slots.settings, function () { return slots.register(
-				{ name: PLATFORM.slots.settings, id: "dsh-task-capsule", order: 91, label: tr("slot.settingsLabel") },
-				function () { return h(CapsuleSettings, null); }); });
+			registerSlot(PLATFORM.slots.settings, "dsh-task-capsule", 91, "slot.settingsLabel", CapsuleSettings);
 		}
 
 		exports.apply = apply;
