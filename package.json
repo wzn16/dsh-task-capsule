@@ -1,6 +1,6 @@
 {
   "name": "dsh-task-capsule",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "DSH 任务两件套：会话 header 运行任务胶囊（圆点颜色分态、点击跳转对应会话、多任务下拉列表）、任务通知卡（显式按钮跳转、提示音、可选系统通知）。从 dsh-dock 最常用的功能提取精简而成；token 统计交给 DSH 自带会话统计条，不重复做。",
   "type": "module",
   "main": "index.js",
@@ -9,12 +9,28 @@
     "client.js",
     "src/",
     "features/",
+    "scripts/",
     "cordis.patch.yml",
-    "locale/"
+    "locale/",
+    "icon.svg",
+    "README.md",
+    "CHANGELOG.md",
+    "ROADMAP.md",
+    "docs/DETAIL.md",
+    "docs/COMPATIBILITY.md",
+    "docs/FIELDS.md",
+    "docs/ROLLBACK.md"
   ],
+  "scripts": {
+    "check": "node scripts/check-host-symbols.mjs && node scripts/smoke.mjs && node --test scripts/unit.test.mjs && node scripts/gen-locale.mjs --check",
+    "smoke": "node scripts/smoke.mjs",
+    "locale": "node scripts/gen-locale.mjs"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
   "dsh": {

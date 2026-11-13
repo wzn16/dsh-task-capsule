@@ -154,5 +154,10 @@
   "toast.longest": "Longest: ",
   "unit.hour": "h ",
   "unit.minute": "m ",
-  "unit.second": "s"
+  "unit.second": "s",
+  "meta": {
+    "title": "Task capsule",
+    "description": "A ledger of what your sessions ran: status, duration, failures and interrupts, with one alert when you leave the window.",
+    "detail": "docs/DETAIL.md"
+  }
 }

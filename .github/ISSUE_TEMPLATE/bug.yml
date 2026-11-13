@@ -1,0 +1,99 @@
+name: 问题反馈 / Bug report
+description: 胶囊不显示、提醒不来、账本数据不对
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先跑一遍自查，能省一轮来回：
+
+        ```sh
+        node scripts/smoke.mjs
+        node --test scripts/unit.test.mjs
+        node scripts/gen-locale.mjs --check
+        ```
+
+        有红的把输出贴到下面。只读路由相关的再加 `DSH_WEB_BASE=http://127.0.0.1:<port> bash scripts/security-regression.sh`。
+
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH 版本
+      description: 设置页底部，或 `dsh --version`
+      placeholder: 0.2.2-rc.2
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: 插件版本
+      description: package.json 的 version
+      placeholder: 1.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: 安装方式
+      options:
+        - link 本地目录
+        - npm（发布后）
+        - 插件市场
+        - 其它
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 哪块出问题
+      options:
+        - 任务胶囊（header）
+        - 任务下拉
+        - 通知卡 / 提示音 / 系统通知
+        - 账本面板 / 导出
+        - 设置页
+        - 语言 / 词条
+        - 安装或加载
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 越具体越好；涉及离开窗口的，写清页面当时是可见、后台还是最小化
+      placeholder: |
+        1. 开三个会话各跑一个长任务
+        2. 切到别的应用 5 分钟
+        3. 回来看到……
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望 vs 实际
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 证据
+      description: 截图、`~/.dsh/dsh-task-capsule*/ledger.jsonl` 片段（自行脱敏）、控制台报错
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 自查
+      options:
+        - label: 已确认不是「页面关闭 / 后台节流」造成的（见 README 已知限制）
+        - label: 已完全退出并重启 DSH 复现过
+        - label: 贴出的内容已脱敏

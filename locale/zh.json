@@ -154,5 +154,10 @@
   "toast.longest": "最长 ",
   "unit.hour": "小时",
   "unit.minute": "分",
-  "unit.second": "秒"
+  "unit.second": "秒",
+  "meta": {
+    "title": "任务胶囊",
+    "description": "会话任务账本：跑过什么、跑了多久、失败了还是被中断；你离开窗口时提醒一次。",
+    "detail": "docs/DETAIL.md"
+  }
 }

@@ -39,7 +39,11 @@ function render(dicts) {
   const body = {}
   for (const id of LOCALES) {
     const sorted = {}
-    for (const k of Object.keys(dicts[id]).sort()) sorted[k] = dicts[id][k]
+    for (const k of Object.keys(dicts[id]).sort()) {
+      // meta 这类给插件面板读的字段不是词条，别塞进运行时字典
+      if (typeof dicts[id][k] !== 'string') continue
+      sorted[k] = dicts[id][k]
+    }
     body[id] = sorted
   }
   const json = JSON.stringify(body, null, '\t')

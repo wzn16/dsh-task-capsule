@@ -1,5 +1,9 @@
 <img src="assets/readme/hero.svg" width="100%" alt="dsh-task-capsule：DSH 的任务账本，记录每个会话跑过什么、跑了多久，只在你不在窗口前时提醒一次">
 
+**dsh-task-capsule** — a ledger for your DeepSeek Harness sessions: what each one ran, how long it took, whether it failed or was interrupted, and how much time went into waiting for approvals. One alert when you step away with something finished or waiting.
+
+Zero runtime dependencies · MIT · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Compatibility](docs/COMPATIBILITY.md)
+
 ---
 
 ## 它解决什么
@@ -40,30 +44,30 @@ DSH 原生会告诉你「这个会话现在是什么状态」，但不会留下�
 
 ## 安装
 
+克隆之后走面板装，面板会自己登记 bundle：
+
 ```sh
-# 1. 克隆（零运行时依赖，不需要 install），记住绝对路径
 git clone https://github.com/wzn16/dsh-task-capsule.git
-cd dsh-task-capsule && PLUGIN_DIR="$(pwd)" && echo "$PLUGIN_DIR"
-#   这一步要在同一个 shell 里跑完；换了窗口就把 $PLUGIN_DIR 换成上面打印的路径
-
-# 2. 看你自己的 profile 目录，别照抄
-ls ~/.dsh/profiles/
-#   桌面端通常是 desktop，浏览器端（dsh web）是 web
-
-# 3. 链进 profile：把 desktop 换成第 2 步看到的目录名
-cd ~/.dsh/profiles/desktop
-pnpm add "link:$PLUGIN_DIR"
-#   等价：dsh plugin --profile desktop add "link:$PLUGIN_DIR"
-
-# 4. 确认两处都有 dsh-task-capsule；缺 dsh.profile.bundles 就手动补一行
-grep -n '"dsh-task-capsule"' package.json
-
-# 5. 完全退出并重启 DSH Desktop（刷新浏览器不够）
 ```
+
+然后在 **插件 → 添加插件** 里选这个目录，**完全退出并重启 DSH Desktop**（刷新浏览器不够）。
+
+<details>
+<summary>CLI 装法 / 手动兜底</summary>
+
+```sh
+cd ~/工作/code/dsh-task-capsule && PLUGIN_DIR="$(pwd)"   # 换成你的克隆路径
+cd ~/.dsh/profiles/desktop                              # 你的 profile 名见 ls ~/.dsh/profiles/
+pnpm add "link:$PLUGIN_DIR"                             # 等价：dsh plugin --profile desktop add "link:$PLUGIN_DIR"
+grep -n '"dsh-task-capsule"' package.json               # 依赖与 dsh.profile.bundles 两处都要有
+```
+
+**`pnpm add` 不会替你写 `dsh.profile.bundles`**，缺的那行得手补；面板安装才会自动登记。
+</details>
 
 **装完确认**（三条都要满足）：① 设置页出现「任务胶囊」分区；② 会话 header 右侧出现任务胶囊；③ 应用日志出现 `[dsh-task-capsule] host half loaded; features: runstate, notify`。
 
-**兼容性**：已在 DSH Desktop 0.2.1-rc.2（macOS，desktop profile）实测；浏览器 profile 理论同构但未实测。宿主 API 有过漂移（settings 门面拒写、slot 名变更），升级 DSH 后请重跑上面的确认三条。插件加载失败会在日志里明确报出缺哪个服务。
+**兼容性**：实测版本、依赖面与升级后自查命令见 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)。宿主 API 有过漂移（settings 门面拒写、slot 名变更），升级 DSH 后请重跑自查；插件加载失败会在日志里明确报出缺哪个服务。
 
 ## 配置
 
@@ -121,7 +125,7 @@ curl -s -X POST http://127.0.0.1:<port>/dsh-task-capsule/ledger/export \
 
 ## 版本与更新
 
-- 版本以 `package.json` 为准，改动见 [Releases](https://github.com/wzn16/dsh-task-capsule/releases)。
+- 版本以 `package.json` 为准，逐版改动见 [CHANGELOG](CHANGELOG.md)，发布说明见 [Releases](https://github.com/wzn16/dsh-task-capsule/releases)。
 - 📝 中文介绍与设计思路：[掘金 · 我给 AI 编码工具写了本「任务账本」](https://juejin.cn/spost/7699013116714156067)
 - 更新：`cd 你的克隆目录 && git pull` → 完全退出并重启 DSH Desktop。`link:` 安装不会自动跟版本。
 - 出问题按 [docs/ROLLBACK.md](docs/ROLLBACK.md) 取证与回滚。
@@ -146,6 +150,8 @@ node scripts/gen-locale.mjs --check    # 只校验是否同步（提交前跑）
 ## 开发
 
 ```sh
+npm run check                                                              # 前四条串起来跑一遍
+node scripts/check-host-symbols.mjs                                        # 升级 DSH 后先跑：宿主里 7 个平台符号还在不在
 node scripts/smoke.mjs                                                     # 模块装配 + 标识/平台符号一致
 node --test scripts/unit.test.mjs                                          # 15 条纯函数与降级路径
 node scripts/gen-locale.mjs --check                                        # locale/*.json 与 client.js 是否同步
